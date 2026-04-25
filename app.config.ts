@@ -15,6 +15,7 @@ const config: ExpoConfig = {
     backgroundColor: '#ffffff',
   },
   ios: {
+    bundleIdentifier: 'com.anonymous.storage-reducer-app',
     supportsTablet: true,
     infoPlist: {
       NSPhotoLibraryUsageDescription:
@@ -26,6 +27,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
+    package: 'com.anonymous.storage_reducer_app',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',

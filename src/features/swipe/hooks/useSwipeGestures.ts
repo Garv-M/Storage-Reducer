@@ -14,9 +14,16 @@ export const useSwipeGestures = ({ width, height, onSwipeComplete }: UseSwipeGes
   const tx = useSharedValue(0);
   const ty = useSharedValue(0);
 
-  const reset = () => {
-    tx.value = withSpring(0);
-    ty.value = withSpring(0);
+  const handleEnd = (translationX: number, translationY: number, velocityX: number, velocityY: number) => {
+    const decision = classifySwipe(translationX, translationY, velocityX, velocityY, width, height);
+
+    if (!decision) {
+      tx.value = withSpring(0);
+      ty.value = withSpring(0);
+      return;
+    }
+
+    onSwipeComplete(decision);
   };
 
   const pan = Gesture.Pan()
@@ -25,23 +32,7 @@ export const useSwipeGestures = ({ width, height, onSwipeComplete }: UseSwipeGes
       ty.value = event.translationY;
     })
     .onEnd((event) => {
-      const decision = classifySwipe(
-        event.translationX,
-        event.translationY,
-        event.velocityX,
-        event.velocityY,
-        width,
-        height
-      );
-
-      if (!decision) {
-        tx.value = withSpring(0);
-        ty.value = withSpring(0);
-        return;
-      }
-
-      runOnJS(onSwipeComplete)(decision);
-      runOnJS(reset)();
+      runOnJS(handleEnd)(event.translationX, event.translationY, event.velocityX, event.velocityY);
     });
 
   return {

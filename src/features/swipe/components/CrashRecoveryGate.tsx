@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { usePathname, useRouter } from 'expo-router';
 
@@ -9,12 +9,18 @@ export function CrashRecoveryGate() {
   const router = useRouter();
   const pathname = usePathname();
   const hasAttempted = useRef(false);
+  const [isReady, setIsReady] = useState(false);
 
   const onboarded = useSettingsStore((state) => state.onboarded);
   const findResumable = useSessionStore((state) => state.findResumable);
   const setActiveSession = useSessionStore((state) => state.setActiveSession);
 
   useEffect(() => {
+    requestAnimationFrame(() => setIsReady(true));
+  }, []);
+
+  useEffect(() => {
+    if (!isReady) return;
     if (hasAttempted.current) return;
     if (!onboarded) return;
 
@@ -30,7 +36,7 @@ export function CrashRecoveryGate() {
     }
 
     hasAttempted.current = true;
-  }, [findResumable, onboarded, pathname, router, setActiveSession]);
+  }, [isReady, findResumable, onboarded, pathname, router, setActiveSession]);
 
   return null;
 }
