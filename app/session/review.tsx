@@ -4,9 +4,12 @@ import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { ReviewGrid } from '@/features/review/components/ReviewGrid';
+import { useTrashStore } from '@/stores/trashStore';
 
 export default function SessionReviewScreen() {
   const router = useRouter();
+  const staged = useTrashStore((state) => state.getStagedList());
+  const removeStaged = useTrashStore((state) => state.removeStaged);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   return (
@@ -21,7 +24,16 @@ export default function SessionReviewScreen() {
       </View>
 
       <Pressable
-        onPress={() => router.push('/session/confirm')}
+        onPress={() => {
+          const selectedSet = new Set(selectedIds);
+          staged
+            .filter((item) => !selectedSet.has(item.assetId))
+            .forEach((item) => {
+              removeStaged(item.assetId);
+            });
+
+          router.push('/session/confirm');
+        }}
         style={{ margin: 16, backgroundColor: '#0053e2', borderRadius: 12, paddingVertical: 14, alignItems: 'center' }}
       >
         <Text style={{ color: '#fff', fontWeight: '700' }}>{`Continue (${selectedIds.length})`}</Text>

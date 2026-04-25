@@ -44,3 +44,12 @@ export const getAssetInfo = async (id: string) => {
     return null;
   }
 };
+
+export const deleteAssetsAsync = async (ids: string[]) => {
+  try {
+    return await ExpoMediaLibrary.deleteAssetsAsync(ids);
+  } catch (error) {
+    logger.error('Failed to delete assets', error);
+    throw error;
+  }
+};

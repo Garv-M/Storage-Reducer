@@ -1,9 +1,11 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+
+import { StatsDashboard } from '@/features/stats/components/StatsDashboard';
 
 export default function StatsScreen() {
   return (
-    <View className="flex-1 items-center justify-center bg-white">
-      <Text>Stats</Text>
+    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: 56, paddingHorizontal: 16 }}>
+      <StatsDashboard />
     </View>
   );
 }

@@ -11,12 +11,14 @@ interface ReviewGridProps {
 
 export function ReviewGrid({ onSelectionChange }: ReviewGridProps) {
   const staged = useTrashStore((state) => state.getStagedList());
-  const [selectedIds, setSelectedIds] = useState<string[]>(staged.map((item) => item.assetId));
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    staged.filter((item) => !item.isShared).map((item) => item.assetId)
+  );
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
   useEffect(() => {
-    const allIds = staged.map((item) => item.assetId);
+    const allIds = staged.filter((item) => !item.isShared).map((item) => item.assetId);
     setSelectedIds(allIds);
     onSelectionChange?.(allIds);
   }, [onSelectionChange, staged]);

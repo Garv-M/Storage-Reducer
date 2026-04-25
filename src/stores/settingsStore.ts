@@ -17,11 +17,13 @@ interface SettingsStoreState {
   incognito: boolean;
   theme: ThemeMode;
   autoSkip: AutoSkipFlags;
+  skipCloudOnly: boolean;
   onboarded: boolean;
   setRetentionDays: (days: number) => void;
   setIncognito: (enabled: boolean) => void;
   setTheme: (theme: ThemeMode) => void;
   setAutoSkip: (flags: Partial<AutoSkipFlags>) => void;
+  setSkipCloudOnly: (enabled: boolean) => void;
   setOnboarded: (onboarded: boolean) => void;
 }
 
@@ -36,11 +38,17 @@ export const useSettingsStore = create<SettingsStoreState>()(
         cloudOnly: false,
         shared: false,
       },
+      skipCloudOnly: false,
       onboarded: false,
       setRetentionDays: (retentionDays) => set({ retentionDays }),
       setIncognito: (incognito) => set({ incognito }),
       setTheme: (theme) => set({ theme }),
       setAutoSkip: (flags) => set((state) => ({ autoSkip: { ...state.autoSkip, ...flags } })),
+      setSkipCloudOnly: (enabled) =>
+        set((state) => ({
+          skipCloudOnly: enabled,
+          autoSkip: { ...state.autoSkip, cloudOnly: enabled },
+        })),
       setOnboarded: (onboarded) => set({ onboarded }),
     }),
     {

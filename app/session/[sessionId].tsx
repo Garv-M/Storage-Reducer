@@ -27,7 +27,6 @@ export default function SessionByIdScreen() {
 
   const incrementReviewed = useStatsStore((state) => state.incrementReviewed);
   const incrementFavorites = useStatsStore((state) => state.incrementFavorites);
-  const addFreedBytes = useStatsStore((state) => state.addFreedBytes);
 
   const { assets, isLoading } = useSessionQueue(sessionId ?? '');
 
@@ -45,7 +44,6 @@ export default function SessionByIdScreen() {
 
     if (decision === 'DELETE_STAGED') {
       addStaged(asset);
-      addFreedBytes(asset.bytes);
     }
 
     if (decision === 'FAVORITE') {

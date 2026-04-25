@@ -7,9 +7,11 @@ interface StatsStoreState {
   totalFreedBytes: number;
   photosReviewed: number;
   favoritesCount: number;
+  sessionsCompleted: number;
   addFreedBytes: (bytes: number) => void;
   incrementReviewed: () => void;
   incrementFavorites: () => void;
+  incrementSessionsCompleted: () => void;
 }
 
 export const useStatsStore = create<StatsStoreState>()(
@@ -18,9 +20,11 @@ export const useStatsStore = create<StatsStoreState>()(
       totalFreedBytes: 0,
       photosReviewed: 0,
       favoritesCount: 0,
+      sessionsCompleted: 0,
       addFreedBytes: (bytes) => set((state) => ({ totalFreedBytes: Math.max(0, state.totalFreedBytes + bytes) })),
       incrementReviewed: () => set((state) => ({ photosReviewed: state.photosReviewed + 1 })),
       incrementFavorites: () => set((state) => ({ favoritesCount: state.favoritesCount + 1 })),
+      incrementSessionsCompleted: () => set((state) => ({ sessionsCompleted: state.sessionsCompleted + 1 })),
     }),
     {
       name: 'stats-store-v1',
