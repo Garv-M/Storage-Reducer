@@ -103,7 +103,7 @@ export function PinPad({
                 setPin((prev) => {
                   if (prev.length >= maxLength) return prev;
                   const next = `${prev}${digit}`;
-                  if (next.length >= minLength) {
+                  if (next.length === maxLength) {
                     void submit(next);
                   }
                   return next;

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { usePathname, useRouter } from 'expo-router';
 
+import { useLockStore } from '@/stores/lockStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 
@@ -11,12 +12,15 @@ export function CrashRecoveryGate() {
   const hasAttempted = useRef(false);
 
   const onboarded = useSettingsStore((state) => state.onboarded);
+  const isLocked = useLockStore((state) => state.isLocked);
+  const isLockEnabled = useLockStore((state) => state.isLockEnabled);
   const findResumable = useSessionStore((state) => state.findResumable);
   const setActiveSession = useSessionStore((state) => state.setActiveSession);
 
   useEffect(() => {
     if (hasAttempted.current) return;
     if (!onboarded) return;
+    if (isLockEnabled && isLocked) return;
 
     const resumable = findResumable();
     if (!resumable) {
@@ -26,11 +30,15 @@ export function CrashRecoveryGate() {
 
     if (pathname === '/(tabs)/home' || pathname === '/') {
       setActiveSession(resumable.id);
-      router.replace(`/session/${resumable.id}`);
+      const timer = setTimeout(() => {
+        router.replace(`/session/${resumable.id}`);
+      }, 0);
+      hasAttempted.current = true;
+      return () => clearTimeout(timer);
     }
 
     hasAttempted.current = true;
-  }, [findResumable, onboarded, pathname, router, setActiveSession]);
+  }, [findResumable, isLocked, isLockEnabled, onboarded, pathname, router, setActiveSession]);
 
   return null;
 }

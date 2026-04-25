@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { PinPad } from '@/features/lock/components/PinPad';
 import { AppLockService } from '@/services/auth/AppLockService';
 import { getBiometricType, isBiometricAvailable } from '@/services/auth/biometric';
+import { loadPinLength } from '@/services/auth/pinHash';
 import { useLockStore } from '@/stores/lockStore';
 
 interface LockScreenContentProps {
@@ -15,6 +16,7 @@ interface LockScreenContentProps {
 export function LockScreenContent({ onUnlocked }: LockScreenContentProps) {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricType, setBiometricType] = useState<'fingerprint' | 'facial' | 'iris' | null>(null);
+  const [pinLength, setPinLength] = useState<number | null>(null);
 
   const biometricEnabled = useLockStore((state) => state.biometricEnabled);
 
@@ -37,6 +39,9 @@ export function LockScreenContent({ onUnlocked }: LockScreenContentProps) {
         setBiometricType(await getBiometricType());
       }
 
+      const storedLength = await loadPinLength();
+      setPinLength(storedLength);
+
       if (available && biometricEnabled) {
         await tryBiometric();
       }
@@ -49,6 +54,8 @@ export function LockScreenContent({ onUnlocked }: LockScreenContentProps) {
       <Text style={{ marginTop: 8, marginBottom: 22, color: '#2e3a46' }}>Enter your PIN to continue.</Text>
 
       <PinPad
+        minLength={pinLength ?? 4}
+        maxLength={pinLength ?? 6}
         biometricAvailable={biometricAvailable && biometricEnabled}
         biometricType={biometricType}
         onBiometric={() => {
