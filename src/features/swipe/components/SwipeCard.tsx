@@ -5,20 +5,24 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import { ROTATION_FACTOR } from '@/constants/thresholds';
 import { SwipeActionOverlay } from '@/features/swipe/components/SwipeActionOverlay';
+import { BurstGroupPreview } from '@/features/swipe/components/BurstGroupPreview';
+import { LivePhotoPreview } from '@/features/swipe/components/LivePhotoPreview';
+import { MetadataSheet } from '@/features/swipe/components/MetadataSheet';
+import { VideoPreview } from '@/features/swipe/components/VideoPreview';
 import { ZoomablePhoto } from '@/features/swipe/components/ZoomablePhoto';
 import { useSwipeGestures } from '@/features/swipe/hooks/useSwipeGestures';
-import type { Decision } from '@/types/decision';
 import type { Asset } from '@/types/asset';
-import { MetadataSheet } from '@/features/swipe/components/MetadataSheet';
+import type { Decision } from '@/types/decision';
 
 interface SwipeCardProps {
   asset: Asset;
+  groupAssets?: Asset[];
   onSwipeComplete: (decision: Decision, asset: Asset) => void;
 }
 
 const { width, height } = Dimensions.get('window');
 
-export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
+export function SwipeCard({ asset, groupAssets = [], onSwipeComplete }: SwipeCardProps) {
   const [showMetadata, setShowMetadata] = useState(false);
   const { pan, tx, ty } = useSwipeGestures({
     width,
@@ -48,8 +52,18 @@ export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
     <>
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.card, cardStyle]}>
-          <Pressable style={{ flex: 1 }} onLongPress={() => setShowMetadata(true)} delayLongPress={250}>
-            <ZoomablePhoto uri={asset.uri} />
+          <Pressable
+            style={{ flex: 1 }}
+            onLongPress={() => setShowMetadata(true)}
+            delayLongPress={250}
+            accessibilityRole="imagebutton"
+            accessibilityLabel={`Photo card ${asset.filename}`}
+            accessibilityHint="Swipe left to delete, right to keep, up to favorite, or down to skip"
+          >
+            {asset.kind === 'burst' && groupAssets.length > 1 ? <BurstGroupPreview assets={groupAssets} /> : null}
+            {asset.kind === 'livePhoto' ? <LivePhotoPreview stillUri={asset.uri} motionUri={asset.pairing?.motionUri} /> : null}
+            {asset.kind === 'video' ? <VideoPreview uri={asset.uri} /> : null}
+            {asset.kind === 'photo' || asset.kind === 'rawPair' ? <ZoomablePhoto uri={asset.uri} /> : null}
             <SwipeActionOverlay tx={tx} ty={ty} width={width} height={height} />
           </Pressable>
         </Animated.View>

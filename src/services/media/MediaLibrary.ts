@@ -12,13 +12,20 @@ export interface AssetPage {
 
 export const requestPermissions = async () => ExpoMediaLibrary.requestPermissionsAsync(false, ['photo', 'video']);
 
-export const getAssets = async (cursor?: string | null, pageSize = 200): Promise<AssetPage> => {
+export const getPermissions = async () => ExpoMediaLibrary.getPermissionsAsync(false, ['photo', 'video']);
+
+export const getAssets = async (
+  cursor?: string | null,
+  pageSize = 200,
+  options?: { createdAfter?: number }
+): Promise<AssetPage> => {
   try {
     const page = await ExpoMediaLibrary.getAssetsAsync({
       first: pageSize,
       after: cursor ?? undefined,
       mediaType: ['photo', 'video'],
       sortBy: [ExpoMediaLibrary.SortBy.creationTime],
+      createdAfter: options?.createdAfter,
     });
 
     return {
@@ -43,6 +50,10 @@ export const getAssetInfo = async (id: string) => {
     logger.error(`Failed to fetch asset info for ${id}`, error);
     return null;
   }
+};
+
+export const getAssetsCreatedAfter = async (createdAfter: number, pageSize = 200) => {
+  return getAssets(null, pageSize, { createdAfter });
 };
 
 export const deleteAssetsAsync = async (ids: string[]) => {

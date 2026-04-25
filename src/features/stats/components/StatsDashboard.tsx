@@ -15,6 +15,7 @@ export function StatsDashboard() {
   const photosReviewed = useStatsStore((state) => state.photosReviewed);
   const favoritesCount = useStatsStore((state) => state.favoritesCount);
   const sessionsCompleted = useStatsStore((state) => state.sessionsCompleted);
+  const streak = useStatsStore((state) => state.streak);
 
   return (
     <View style={{ gap: 8 }}>
@@ -25,6 +26,7 @@ export function StatsDashboard() {
         <StatCard label="Favorites" value={String(favoritesCount)} />
         <StatCard label="Sessions completed" value={String(sessionsCompleted)} />
       </View>
+      <Text style={{ color: '#2e3a46', fontWeight: '600' }}>{`Current streak: ${streak.current} day${streak.current === 1 ? '' : 's'}`}</Text>
     </View>
   );
 }

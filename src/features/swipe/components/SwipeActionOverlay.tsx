@@ -4,6 +4,7 @@ import Animated, {
   SharedValue,
   interpolate,
   useAnimatedStyle,
+  withTiming,
 } from 'react-native-reanimated';
 
 import { DECISION_COLORS } from '@/features/swipe/logic/decisions';
@@ -17,16 +18,16 @@ interface SwipeActionOverlayProps {
 
 export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlayProps) {
   const leftStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(tx.value, [-width * 0.3, 0], [1, 0], Extrapolation.CLAMP),
+    opacity: withTiming(interpolate(tx.value, [-width * 0.3, 0], [1, 0], Extrapolation.CLAMP), { duration: 140 }),
   }));
   const rightStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(tx.value, [0, width * 0.3], [0, 1], Extrapolation.CLAMP),
+    opacity: withTiming(interpolate(tx.value, [0, width * 0.3], [0, 1], Extrapolation.CLAMP), { duration: 140 }),
   }));
   const topStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(ty.value, [-height * 0.3, 0], [1, 0], Extrapolation.CLAMP),
+    opacity: withTiming(interpolate(ty.value, [-height * 0.3, 0], [1, 0], Extrapolation.CLAMP), { duration: 140 }),
   }));
   const bottomStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(ty.value, [0, height * 0.3], [0, 1], Extrapolation.CLAMP),
+    opacity: withTiming(interpolate(ty.value, [0, height * 0.3], [0, 1], Extrapolation.CLAMP), { duration: 140 }),
   }));
 
   return (

@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { Gesture } from 'react-native-gesture-handler';
 import { runOnJS, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -15,8 +16,13 @@ export const useSwipeGestures = ({ width, height, onSwipeComplete }: UseSwipeGes
   const ty = useSharedValue(0);
 
   const reset = () => {
-    tx.value = withSpring(0);
-    ty.value = withSpring(0);
+    tx.value = withSpring(0, { damping: 15, stiffness: 150 });
+    ty.value = withSpring(0, { damping: 15, stiffness: 150 });
+  };
+
+  const completeSwipe = (decision: Decision) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onSwipeComplete(decision);
   };
 
   const pan = Gesture.Pan()
@@ -40,8 +46,20 @@ export const useSwipeGestures = ({ width, height, onSwipeComplete }: UseSwipeGes
         return;
       }
 
-      runOnJS(onSwipeComplete)(decision);
-      runOnJS(reset)();
+      const targetX = decision === 'DELETE_STAGED' ? -width * 1.15 : decision === 'KEEP' ? width * 1.15 : 0;
+      const targetY = decision === 'FAVORITE' ? -height * 1.1 : decision === 'SKIP_LATER' ? height * 1.1 : 0;
+
+      tx.value = withSpring(targetX, { damping: 15, stiffness: 150 }, (finished) => {
+        if (finished) {
+          runOnJS(completeSwipe)(decision);
+          tx.value = 0;
+        }
+      });
+      ty.value = withSpring(targetY, { damping: 15, stiffness: 150 }, (finished) => {
+        if (finished) {
+          ty.value = 0;
+        }
+      });
     });
 
   return {

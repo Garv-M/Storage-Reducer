@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 
@@ -26,6 +27,7 @@ export default function SessionConfirmScreen() {
         hasCloudOnlyItems={hasCloudOnlyItems}
         onCancel={() => router.back()}
         onConfirm={() => {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           if (activeSessionId) {
             DeletionService.confirmStaged(activeSessionId);
           }
