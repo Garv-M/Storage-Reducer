@@ -5,6 +5,7 @@ import { DEFAULT_RETENTION } from '@/constants/retention';
 import { createMmkvStorage } from '@/services/persistence/zustandStorage';
 
 export interface AutoSkipFlags {
+  favorites: boolean;
   hidden: boolean;
   cloudOnly: boolean;
   shared: boolean;
@@ -34,6 +35,7 @@ export const useSettingsStore = create<SettingsStoreState>()(
       incognito: false,
       theme: 'system',
       autoSkip: {
+        favorites: false,
         hidden: true,
         cloudOnly: false,
         shared: false,

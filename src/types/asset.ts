@@ -19,5 +19,5 @@ export interface Asset {
   isCloudOnly: boolean;
   isShared: boolean;
   groupId?: string;
-  pairing?: { rawId?: AssetId; jpegId?: AssetId };
+  pairing?: { rawId?: AssetId; jpegId?: AssetId; motionUri?: string; groupAssetIds?: AssetId[] };
 }

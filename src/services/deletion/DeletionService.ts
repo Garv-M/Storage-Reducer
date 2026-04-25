@@ -27,8 +27,11 @@ export const DeletionService = {
     const confirmed = useTrashStore.getState().confirmStaged(retentionDays);
 
     if (confirmed.length > 0) {
+      const session = useSessionStore.getState().sessions[sessionId];
       useSessionStore.getState().completeSession(sessionId);
-      useStatsStore.getState().incrementSessionsCompleted();
+      if (!session?.incognito) {
+        useStatsStore.getState().incrementSessionsCompleted();
+      }
     }
 
     return confirmed;

@@ -186,10 +186,19 @@ export const useSessionStore = create<SessionStoreState>()(
     {
       name: 'session-store-v1',
       storage: createJSONStorage(() => createMmkvStorage(250)),
-      partialize: (state) => ({
-        activeSessionId: state.activeSessionId,
-        sessions: state.sessions,
-      }),
+      partialize: (state) => {
+        const persistedSessions = Object.fromEntries(
+          Object.entries(state.sessions).filter(([, session]) => !session.incognito)
+        );
+
+        return {
+          activeSessionId:
+            state.activeSessionId && persistedSessions[state.activeSessionId]
+              ? state.activeSessionId
+              : null,
+          sessions: persistedSessions,
+        };
+      },
     }
   )
 );

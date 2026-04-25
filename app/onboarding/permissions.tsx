@@ -14,8 +14,8 @@ export default function PermissionsScreen() {
     const result = await request();
 
     if (result.granted) {
-      setOnboarded(true);
-      router.replace('/(tabs)/home');
+      setOnboarded(false);
+      router.replace('/onboarding/lock-setup');
       return;
     }
 
