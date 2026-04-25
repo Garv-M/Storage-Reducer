@@ -5,18 +5,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        blue: {
-          100: '#0053e2',
-        },
-        spark: {
-          100: '#ffc220',
-        },
-        red: {
-          100: '#ea1100',
-        },
-        green: {
-          100: '#2a8703',
-        },
+        blue100: '#0053e2',
+        spark100: '#ffc220',
+        red100: '#ea1100',
+        green100: '#2a8703',
       },
     },
   },

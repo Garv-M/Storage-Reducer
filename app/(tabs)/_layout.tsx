@@ -30,7 +30,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
-      <Tabs.Screen name="sessions" options={{ href: null }} />
     </Tabs>
   );
 }
