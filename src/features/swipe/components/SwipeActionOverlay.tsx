@@ -1,5 +1,8 @@
+// Directional overlay badges for swipe intent feedback.
+// Reinforces gesture-to-action mapping before a swipe threshold is crossed.
+
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
   Extrapolation,
   SharedValue,
@@ -19,7 +22,9 @@ interface SwipeActionOverlayProps {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-/** Hex → rgba with given alpha (0–1). */
+/**
+ * Converts a hex color to rgba with configurable alpha.
+ */
 function hexAlpha(hex: string, alpha: number) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -27,13 +32,16 @@ function hexAlpha(hex: string, alpha: number) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-const DELETE_BG   = hexAlpha(DECISION_COLORS.DELETE_STAGED, 0.88);
-const KEEP_BG     = hexAlpha(DECISION_COLORS.KEEP, 0.88);
+const DELETE_BG = hexAlpha(DECISION_COLORS.DELETE_STAGED, 0.88);
+const KEEP_BG = hexAlpha(DECISION_COLORS.KEEP, 0.88);
 const FAVORITE_BG = hexAlpha(DECISION_COLORS.FAVORITE, 0.88);
-const SKIP_BG     = hexAlpha(DECISION_COLORS.SKIP_LATER, 0.88);
+const SKIP_BG = hexAlpha(DECISION_COLORS.SKIP_LATER, 0.88);
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Renders directional action badges that fade/scale with drag distance.
+ */
 export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlayProps) {
-  // ── Swipe-left → DELETE ──────────────────────────────────────────────────
   const leftStyle = useAnimatedStyle(() => {
     const drag = -tx.value; // positive when dragging left
     return {
@@ -46,7 +54,6 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
     };
   });
 
-  // ── Swipe-right → KEEP ──────────────────────────────────────────────────
   const rightStyle = useAnimatedStyle(() => {
     const drag = tx.value; // positive when dragging right
     return {
@@ -59,7 +66,6 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
     };
   });
 
-  // ── Swipe-up → FAVORITE ─────────────────────────────────────────────────
   const topStyle = useAnimatedStyle(() => {
     const drag = -ty.value; // positive when dragging up
     return {
@@ -72,7 +78,6 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
     };
   });
 
-  // ── Swipe-down → SKIP ───────────────────────────────────────────────────
   const bottomStyle = useAnimatedStyle(() => {
     const drag = ty.value; // positive when dragging down
     return {
@@ -87,9 +92,9 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
 
   return (
     <>
-      {/* DELETE — swipe left */}
       <Animated.View
         style={[styles.badge, styles.left, { backgroundColor: DELETE_BG, shadowColor: DECISION_COLORS.DELETE_STAGED }, leftStyle]}
+        // Decorative feedback only; card-level accessibility already explains gesture outcomes.
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
@@ -97,7 +102,6 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
         <Text variant="label" weight="bold" color={colors.white} style={styles.label}>DELETE</Text>
       </Animated.View>
 
-      {/* KEEP — swipe right */}
       <Animated.View
         style={[styles.badge, styles.right, { backgroundColor: KEEP_BG, shadowColor: DECISION_COLORS.KEEP }, rightStyle]}
         accessibilityElementsHidden
@@ -107,7 +111,6 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
         <Text variant="label" weight="bold" color={colors.white} style={styles.label}>KEEP</Text>
       </Animated.View>
 
-      {/* FAVORITE — swipe up */}
       <Animated.View
         style={[styles.badge, styles.top, { backgroundColor: FAVORITE_BG, shadowColor: DECISION_COLORS.FAVORITE }, topStyle]}
         accessibilityElementsHidden
@@ -117,7 +120,6 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
         <Text variant="label" weight="bold" color={colors.white} style={styles.label}>FAVORITE</Text>
       </Animated.View>
 
-      {/* SKIP — swipe down */}
       <Animated.View
         style={[styles.badge, styles.bottom, { backgroundColor: SKIP_BG, shadowColor: DECISION_COLORS.SKIP_LATER }, bottomStyle]}
         accessibilityElementsHidden
@@ -130,6 +132,7 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
@@ -139,13 +142,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 999,
     zIndex: 40,
-    // Glow shadow
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 12,
     elevation: 8,
   },
-  // Centered vertically on each side
   left: {
     left: 16,
     top: '50%',
@@ -156,7 +157,6 @@ const styles = StyleSheet.create({
     top: '50%',
     transform: [{ translateY: -22 }],
   },
-  // Centered horizontally top/bottom
   top: {
     top: 24,
     alignSelf: 'center',

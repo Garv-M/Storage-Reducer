@@ -1,3 +1,6 @@
+// Session progress header shown above the swipe stack.
+// Summarizes throughput and reclaimed storage while handling top safe-area inset.
+
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +16,10 @@ interface ProgressHeaderProps {
   freedBytes: number;
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Compact progress + stats header for swipe sessions.
+ */
 export function ProgressHeader({ reviewed, total, freedBytes }: ProgressHeaderProps) {
   const insets = useSafeAreaInsets();
   const progress = total > 0 ? reviewed / total : 0;
@@ -22,13 +29,12 @@ export function ProgressHeader({ reviewed, total, freedBytes }: ProgressHeaderPr
     <View
       style={[
         styles.container,
+        // Own top inset here so parent screen can omit top edge and avoid double padding.
         { paddingTop: insets.top + 8 },
       ]}
       accessibilityRole="header"
     >
-      {/* Top row: photo count + freed bytes */}
       <View style={styles.row}>
-        {/* Photo count */}
         <View style={styles.statGroup}>
           <Ionicons name="images-outline" size={16} color={colors.gray100} style={styles.icon} />
           <Text variant="label" color={colors.gray160}>
@@ -36,7 +42,7 @@ export function ProgressHeader({ reviewed, total, freedBytes }: ProgressHeaderPr
           </Text>
         </View>
 
-        {/* Freed bytes — gold emphasis */}
+        {/* Gold emphasis draws attention to value gained, not just task completion. */}
         <View style={styles.statGroup}>
           <Ionicons name="cloud-download-outline" size={16} color={colors.spark140} style={styles.icon} />
           <Text variant="label" weight="bold" color={colors.spark140}>
@@ -48,7 +54,6 @@ export function ProgressHeader({ reviewed, total, freedBytes }: ProgressHeaderPr
         </View>
       </View>
 
-      {/* Animated progress bar */}
       <View style={styles.barWrap}>
         <ProgressBar
           progress={progress}
@@ -60,12 +65,12 @@ export function ProgressHeader({ reviewed, total, freedBytes }: ProgressHeaderPr
         />
       </View>
 
-      {/* Bottom separator */}
       <View style={styles.divider} />
     </View>
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,

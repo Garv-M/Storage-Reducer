@@ -1,3 +1,6 @@
+// Floating undo control for swipe sessions.
+// Uses a gentle breathing animation to signal reversibility when undo is available.
+
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -17,10 +20,13 @@ interface UndoButtonProps {
   onPress: () => void;
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Session-level undo action button.
+ */
 export function UndoButton({ disabled, onPress }: UndoButtonProps) {
   const pulseScale = useSharedValue(1);
 
-  // Breathe / pulse animation when the button is active
   useEffect(() => {
     if (!disabled) {
       pulseScale.value = withRepeat(
@@ -46,7 +52,7 @@ export function UndoButton({ disabled, onPress }: UndoButtonProps) {
 
   return (
     <Animated.View style={[styles.container, pulseStyle]}>
-      {/* Glow ring — only visible when enabled */}
+      {/* Ring only when active to avoid implying tappability while disabled. */}
       {!disabled && <View style={styles.glowRing} />}
 
       <IconButton
@@ -63,6 +69,7 @@ export function UndoButton({ disabled, onPress }: UndoButtonProps) {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
@@ -70,7 +77,6 @@ const styles = StyleSheet.create({
     right: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    // Floating shadow
     shadowColor: colors.gray180,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,

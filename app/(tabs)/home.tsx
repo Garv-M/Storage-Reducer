@@ -1,3 +1,6 @@
+// Home dashboard for session entry and progress snapshots.
+// Balances quick restart/resume actions with trust-building safety messaging.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
@@ -14,6 +17,9 @@ import { Text } from '@/ui/primitives/Text';
 import { colors } from '@/ui/theme/colors';
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Primary home tab where users start or resume cleanup sessions.
+ */
 export default function HomeTabScreen() {
   const router = useRouter();
 
@@ -25,15 +31,23 @@ export default function HomeTabScreen() {
   const photosReviewed = useStatsStore((state) => state.photosReviewed);
   const confirmedTrash = useTrashStore((state) => state.confirmed);
 
+  // Recompute resumable session when stats change so Home reflects latest progress.
   const resumable = useMemo(() => findResumable(), [findResumable, photosReviewed]);
 
+  /**
+   * Creates a brand-new review session using current privacy preferences.
+   */
   const startReview = () => {
     const session = createSession({ incognito });
     router.push(`/session/${session.id}`);
   };
 
+  /**
+   * Restores the last incomplete session and jumps back into swipe flow.
+   */
   const resume = () => {
     if (!resumable) return;
+    // Set active session first so downstream components can hydrate instantly.
     setActiveSession(resumable.id);
     router.push(`/session/${resumable.id}`);
   };
@@ -95,6 +109,7 @@ export default function HomeTabScreen() {
               variant="outlined"
               padding={16}
               style={styles.trashCard}
+              // Announces urgency before users leave Home, reducing accidental expiries.
               accessibilityLabel={`${confirmedTrash.length} photos in trash`}
             >
               <View style={styles.trashRow}>

@@ -1,3 +1,6 @@
+// Final confirmation step before executing staged deletions.
+// Summarizes impact and delegates destructive action to DeletionService.
+
 import { useMemo } from 'react';
 
 import { useRouter } from 'expo-router';
@@ -9,16 +12,20 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { useTrashStore } from '@/stores/trashStore';
 import { colors } from '@/ui/theme/colors';
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Confirmation route for staged deletions.
+ */
 export default function SessionConfirmScreen() {
-  const router          = useRouter();
-  const staged          = useTrashStore((state) => state.getStagedList());
+  const router = useRouter();
+  const staged = useTrashStore((state) => state.getStagedList());
   const activeSessionId = useSessionStore((state) => state.activeSessionId);
 
   const hasCloudOnlyItems = useMemo(() => staged.some((item) => item.isCloudOnly), [staged]);
-  const totalBytes        = useMemo(() => staged.reduce((sum, item) => sum + item.bytes, 0), [staged]);
+  const totalBytes = useMemo(() => staged.reduce((sum, item) => sum + item.bytes, 0), [staged]);
 
   return (
-    // Themed background so the area behind the Modal overlay uses the design token
+    // Themed backdrop ensures modal dim color matches design tokens during transition.
     <View style={styles.root}>
       <ConfirmModal
         visible
@@ -30,6 +37,7 @@ export default function SessionConfirmScreen() {
           if (activeSessionId) {
             DeletionService.confirmStaged(activeSessionId);
           }
+          // Replace prevents navigating back into a now-stale confirm state.
           router.replace('/(tabs)/home');
         }}
       />
@@ -37,6 +45,7 @@ export default function SessionConfirmScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
     flex: 1,

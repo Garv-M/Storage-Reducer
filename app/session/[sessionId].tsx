@@ -1,3 +1,6 @@
+// Core swipe-session screen where decisions are made and persisted.
+// This route coordinates session, trash, and stats stores in one atomic flow.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 
@@ -19,37 +22,51 @@ import { colors } from '@/ui/theme/colors';
 import type { Asset } from '@/types/asset';
 import type { Decision } from '@/types/decision';
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Swipe session screen for a single session id.
+ * Handles queue rendering, swipe side-effects, undo, and completion overlay.
+ */
 export default function SessionByIdScreen() {
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const router = useRouter();
 
   const [isComplete, setIsComplete] = useState(false);
 
-  const session       = useSessionStore((state) => (sessionId ? state.sessions[sessionId] : undefined));
+  const session = useSessionStore((state) => (sessionId ? state.sessions[sessionId] : undefined));
   const setActiveSession = useSessionStore((state) => state.setActiveSession);
-  const recordDecision   = useSessionStore((state) => state.recordDecision);
-  const undo             = useSessionStore((state) => state.undo);
-  const completeSession  = useSessionStore((state) => state.completeSession);
+  const recordDecision = useSessionStore((state) => state.recordDecision);
+  const undo = useSessionStore((state) => state.undo);
+  const completeSession = useSessionStore((state) => state.completeSession);
 
-  const addStaged    = useTrashStore((state) => state.addStaged);
+  const addStaged = useTrashStore((state) => state.addStaged);
   const removeStaged = useTrashStore((state) => state.removeStaged);
 
-  const incrementReviewed  = useStatsStore((state) => state.incrementReviewed);
+  const incrementReviewed = useStatsStore((state) => state.incrementReviewed);
   const incrementFavorites = useStatsStore((state) => state.incrementFavorites);
 
   const { assets, isLoading } = useSessionQueue(sessionId ?? '');
 
   useEffect(() => {
     if (session?.id) {
+      // Keep global activeSessionId aligned so cross-screen actions target the right session.
       setActiveSession(session.id);
     }
   }, [session?.id, setActiveSession]);
 
   if (!sessionId || !session) {
+    // Route guard: if the session no longer exists, return users to a safe entry point.
     router.replace('/(tabs)/home');
     return null;
   }
 
+  /**
+   * Applies a swipe decision and updates every dependent store.
+   * Store wiring:
+   * - sessionStore.recordDecision
+   * - trashStore.addStaged (delete decisions only)
+   * - statsStore.incrementReviewed (+ favorites when relevant)
+   */
   const onSwipeComplete = (decision: Decision, asset: Asset) => {
     const bytes = decision === 'DELETE_STAGED' ? asset.bytes : 0;
     recordDecision(asset.id, decision, bytes);
@@ -58,32 +75,38 @@ export default function SessionByIdScreen() {
     if (decision === 'FAVORITE') incrementFavorites();
   };
 
+  /**
+   * Reverts the last swipe from sessionStore undoStack and mirrors trash cleanup.
+   */
   const onUndo = () => {
     const undone = undo();
     if (!undone) return;
     if (undone.decision === 'DELETE_STAGED') removeStaged(undone.assetId);
   };
 
+  /**
+   * Marks the session complete (stamps completedAt in store) and reveals completion UI.
+   */
   const handleComplete = () => {
     completeSession(sessionId);
     setIsComplete(true);
   };
 
-  const stagedCount   = session.decisions.filter((d) => d.decision === 'DELETE_STAGED').length;
-  const keptCount     = session.decisions.filter((d) => d.decision === 'KEEP').length;
-  const favCount      = session.decisions.filter((d) => d.decision === 'FAVORITE').length;
+  const stagedCount = session.decisions.filter((d) => d.decision === 'DELETE_STAGED').length;
+  const keptCount = session.decisions.filter((d) => d.decision === 'KEEP').length;
+  const favCount = session.decisions.filter((d) => d.decision === 'FAVORITE').length;
   const reviewedCount = session.decisions.length;
 
   return (
+    // Top inset is intentionally excluded because ProgressHeader owns top safe-area spacing.
     <SafeAreaView style={styles.root} edges={['left', 'right', 'bottom']}>
-      {/* Progress header manages its own top safe-area inset */}
       <ProgressHeader
         reviewed={reviewedCount}
         total={Math.max(session.queueIds.length, assets.length)}
         freedBytes={session.freedBytesEstimated}
       />
 
-      {/* Loading state */}
+      {/* ── Loading state ── */}
       {isLoading && assets.length === 0 ? (
         <View style={styles.loadingState} accessibilityLiveRegion="polite">
           <ProgressBar progress={0.3} animated accessibilityLabel="Loading photos" />
@@ -102,10 +125,10 @@ export default function SessionByIdScreen() {
         </View>
       )}
 
-      {/* Undo button — floating */}
+      {/* ── Undo button ── */}
       {!isComplete && <UndoButton disabled={session.undoStack.length === 0} onPress={onUndo} />}
 
-      {/* Completion overlay */}
+      {/* ── Completion overlay ── */}
       {isComplete && (
         <View style={styles.completionOverlay} accessibilityViewIsModal accessibilityLiveRegion="assertive">
           <View style={styles.completionCard}>
@@ -120,14 +143,13 @@ export default function SessionByIdScreen() {
               You reviewed {reviewedCount} photo{reviewedCount !== 1 ? 's' : ''}.
             </Text>
 
-            {/* Quick stats */}
+            {/* StatChip intentionally stays local because usage is unique to this overlay. */}
             <View style={styles.statsRow}>
               <StatChip label="Staged" value={stagedCount} color={colors.red100} />
-              <StatChip label="Kept"   value={keptCount}   color={colors.green100} />
-              <StatChip label="Faves"  value={favCount}    color={colors.spark140} />
+              <StatChip label="Kept" value={keptCount} color={colors.green100} />
+              <StatChip label="Faves" value={favCount} color={colors.spark140} />
             </View>
 
-            {/* CTAs */}
             <View style={styles.completionActions}>
               {stagedCount > 0 && (
                 <Button
@@ -145,6 +167,7 @@ export default function SessionByIdScreen() {
                 variant="secondary"
                 size="lg"
                 fullWidth
+                // replace prevents returning to a finished session overlay.
                 onPress={() => router.replace('/(tabs)/home')}
                 accessibilityLabel="Return to home screen"
               />
@@ -156,12 +179,15 @@ export default function SessionByIdScreen() {
   );
 }
 
-// ── Stat chip helper ──────────────────────────────────────────────────────────
+// ── Local helper ───────────────────────────────────────────────────────────────
+/**
+ * Small stat badge used only by this screen's completion overlay.
+ */
 function StatChip({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <View style={chipStyles.chip} accessibilityRole="text" accessibilityLabel={`${label}: ${value}`}>
       <Text variant="heading" color={color}>{String(value)}</Text>
-      <Text variant="label"   color={colors.gray100}>{label}</Text>
+      <Text variant="label" color={colors.gray100}>{label}</Text>
     </View>
   );
 }
@@ -179,6 +205,7 @@ const chipStyles = StyleSheet.create({
   },
 });
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -198,9 +225,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 100, // room for floating UndoButton
+    paddingBottom: 100, // Reserve space for floating UndoButton hit area.
   },
-  // ── Completion overlay ────────────────────────────────────────────────────
   completionOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.light.overlay,

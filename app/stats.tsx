@@ -1,9 +1,15 @@
+// Full-page stats screen surfaced from navigation shortcuts.
+// Reuses the shared dashboard so summary logic lives in one component.
+
 import { SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 
 import { StatsDashboard } from '@/features/stats/components/StatsDashboard';
 import { Text } from '@/ui/primitives/Text';
 import { colors } from '@/ui/theme/colors';
 
+/**
+ * Detailed stats route.
+ */
 export default function StatsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -17,6 +23,7 @@ export default function StatsScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

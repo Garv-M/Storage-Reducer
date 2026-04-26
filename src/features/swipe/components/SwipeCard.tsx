@@ -1,3 +1,6 @@
+// Interactive swipe card for a single asset.
+// Combines gesture handling, directional feedback, and metadata access affordances.
+
 import { useRef, useMemo, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -30,6 +33,9 @@ const { width, height } = Dimensions.get('window');
 const SPRING_CONFIG = { damping: 18, stiffness: 170 };
 const PRESS_SCALE = 0.98;
 
+/**
+ * Renders the top swipeable card and reports completed decisions.
+ */
 export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
   const [showMetadata, setShowMetadata] = useState(false);
   const pressScale = useSharedValue(1);
@@ -42,7 +48,7 @@ export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
     onSwipeComplete: (decision) => onSwipeComplete(decision, asset),
   });
 
-  // ── Animated styles ──────────────────────────────────────────────────────
+  // ── Animated styles ─────────────────────────────────────────────────────────
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: tx.value },
@@ -56,10 +62,10 @@ export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
     opacity: glowOpacity.value,
   }));
 
-  // ── Press handlers (scale + glow) ────────────────────────────────────────
+  // ── Press handlers (scale + glow) ──────────────────────────────────────────
   const handlePressIn = () => {
     pressScale.value = withSpring(PRESS_SCALE, SPRING_CONFIG);
-    // Start glow pulse after 150ms to hint long-press affordance
+    // Start pulse only after a short delay to hint long-press without distracting quick taps.
     longPressTimerRef.current = setTimeout(() => {
       glowOpacity.value = withRepeat(
         withSequence(
@@ -102,7 +108,7 @@ export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
     <>
       <GestureDetector gesture={pan}>
         <Animated.View style={[styles.card, cardStyle]}>
-          {/* Photo layer (overflow-clipped) */}
+          {/* Overflow clipping is isolated to photo layer so outer shadow still renders. */}
           <View style={styles.photoClip}>
             <Pressable
               style={StyleSheet.absoluteFill}
@@ -118,7 +124,7 @@ export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
             </Pressable>
           </View>
 
-          {/* Long-press glow overlay — sits outside the clip view */}
+          {/* Glow sits outside clipped photo layer to preserve rounded-border emphasis. */}
           <Animated.View style={[StyleSheet.absoluteFill, styles.glowOverlay, glowStyle]} pointerEvents="none" />
         </Animated.View>
       </GestureDetector>
@@ -128,6 +134,7 @@ export function SwipeCard({ asset, onSwipeComplete }: SwipeCardProps) {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
     width: '100%',
@@ -136,7 +143,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray5,
     borderWidth: 1,
     borderColor: colors.gray50,
-    // Elevation / shadow — no overflow:hidden so shadow renders
     shadowColor: colors.gray180,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,

@@ -1,3 +1,6 @@
+// Post-swipe review screen for staged deletion candidates.
+// Lets users make a final keep/sparing pass before destructive confirmation.
+
 import { useState } from 'react';
 
 import { useRouter } from 'expo-router';
@@ -10,12 +13,19 @@ import { Button } from '@/ui/primitives/Button';
 import { Text } from '@/ui/primitives/Text';
 import { colors } from '@/ui/theme/colors';
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Review route where users choose which staged photos remain selected for deletion.
+ */
 export default function SessionReviewScreen() {
   const router = useRouter();
-  const staged       = useTrashStore((state) => state.getStagedList());
+  const staged = useTrashStore((state) => state.getStagedList());
   const removeStaged = useTrashStore((state) => state.removeStaged);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  /**
+   * Keeps only selected photos in staged trash, then advances to confirmation.
+   */
   const handleContinue = () => {
     const selectedSet = new Set(selectedIds);
     staged
@@ -28,7 +38,7 @@ export default function SessionReviewScreen() {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
-      {/* Header */}
+      {/* ── Header ── */}
       <View style={styles.header} accessibilityRole="header">
         <Text variant="title">
           Review Staged
@@ -38,15 +48,14 @@ export default function SessionReviewScreen() {
         </Text>
       </View>
 
-      {/* Header / grid divider */}
       <View style={styles.divider} />
 
-      {/* Photo grid */}
+      {/* ── Photo grid ── */}
       <View style={styles.grid}>
         <ReviewGrid onSelectionChange={setSelectedIds} />
       </View>
 
-      {/* Continue button */}
+      {/* ── Continue button ── */}
       <View style={styles.footer}>
         <Button
           label={`Continue (${selectedIds.length})`}
@@ -62,6 +71,7 @@ export default function SessionReviewScreen() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {
     flex: 1,

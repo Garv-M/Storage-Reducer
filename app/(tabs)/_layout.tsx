@@ -1,3 +1,6 @@
+// Bottom-tab shell for the primary post-onboarding experience.
+// Encapsulates icon behavior and tab accessibility labels in one place.
+
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
@@ -5,7 +8,11 @@ import { colors } from '@/ui/theme/colors';
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
 
-// ── Helper: filled vs outline per active state ────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+/**
+ * Returns a tab icon renderer that swaps filled/outline variants by focus state.
+ * WHY: this keeps visual affordance consistent across tabs without repeating closures.
+ */
 function tabIcon(filled: IoniconsName, outline: IoniconsName) {
   return ({ color, focused }: { color: string; focused: boolean; size: number }) => (
     <Ionicons name={focused ? filled : outline} size={24} color={color} />
@@ -13,6 +20,9 @@ function tabIcon(filled: IoniconsName, outline: IoniconsName) {
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
+/**
+ * Tabs layout used for Home, Trash, and Settings.
+ */
 export default function TabsLayout() {
   return (
     <Tabs

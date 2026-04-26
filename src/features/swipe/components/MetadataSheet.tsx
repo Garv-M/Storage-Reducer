@@ -1,3 +1,6 @@
+// Bottom-sheet details panel for the currently focused photo.
+// Exposes metadata on demand so the swipe surface stays visually uncluttered.
+
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
@@ -26,6 +29,10 @@ interface MetadataRowProps {
   isLast?: boolean;
 }
 
+// ── Row helper ────────────────────────────────────────────────────────────────
+/**
+ * Single metadata row with optional divider.
+ */
 function MetadataRow({ icon, label, value, isLast = false }: MetadataRowProps) {
   return (
     <>
@@ -43,12 +50,16 @@ function MetadataRow({ icon, label, value, isLast = false }: MetadataRowProps) {
   );
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Metadata bottom sheet shown from long-press on a swipe card.
+ */
 export function MetadataSheet({ visible, onClose, metadata }: MetadataSheetProps) {
-  const filename  = metadata?.filename ?? '—';
-  const date      = metadata ? dateFmt(metadata.createdAt) : '—';
-  const size      = metadata ? bytesToHuman(metadata.bytes) : '—';
-  const albums    = metadata?.albums.length ? metadata.albums.join(', ') : 'None';
-  const location  = metadata?.location ?? 'Unknown';
+  const filename = metadata?.filename ?? '—';
+  const date = metadata ? dateFmt(metadata.createdAt) : '—';
+  const size = metadata ? bytesToHuman(metadata.bytes) : '—';
+  const albums = metadata?.albums.length ? metadata.albums.join(', ') : 'None';
+  const location = metadata?.location ?? 'Unknown';
 
   return (
     <BottomSheetModal
@@ -57,7 +68,6 @@ export function MetadataSheet({ visible, onClose, metadata }: MetadataSheetProps
       snapPoints={['55%', '80%']}
     >
       <View style={styles.container}>
-        {/* Filename heading */}
         <Text
           variant="heading"
           numberOfLines={2}
@@ -69,13 +79,11 @@ export function MetadataSheet({ visible, onClose, metadata }: MetadataSheetProps
 
         <View style={styles.divider} />
 
-        {/* Metadata rows */}
         <MetadataRow icon="calendar-outline" label="Date taken" value={date} />
-        <MetadataRow icon="document-outline"  label="File size"  value={size} />
-        <MetadataRow icon="folder-outline"    label="Albums"     value={albums} />
-        <MetadataRow icon="location-outline"  label="Location"   value={location} isLast />
+        <MetadataRow icon="document-outline" label="File size" value={size} />
+        <MetadataRow icon="folder-outline" label="Albums" value={albums} />
+        <MetadataRow icon="location-outline" label="Location" value={location} isLast />
 
-        {/* Close button */}
         <View style={styles.closeWrap}>
           <Button
             label="Close"
@@ -91,6 +99,7 @@ export function MetadataSheet({ visible, onClose, metadata }: MetadataSheetProps
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -1,6 +1,9 @@
+// Trash management workspace for staged/confirmed deletions.
+// Combines operational actions with explanatory copy to reduce destructive mistakes.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BulkActionBar } from '@/features/trash/components/BulkActionBar';
@@ -15,10 +18,16 @@ import { Text } from '@/ui/primitives/Text';
 import { colors } from '@/ui/theme/colors';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/**
+ * Sorts items by nearest expiry first so urgent decisions are surfaced at the top.
+ */
 const sortByExpiry = (a: { expiresAt: number }, b: { expiresAt: number }) =>
   a.expiresAt - b.expiresAt;
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Trash tab with segmented content (items vs. help text) and bulk actions.
+ */
 export default function TrashTabScreen() {
   const insets = useSafeAreaInsets();
 
@@ -28,24 +37,37 @@ export default function TrashTabScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [resetSelectionKey, setResetSelectionKey] = useState(0);
 
+  // Keep soonest-to-expire items visible first to support retention business rules.
   const sortedItems = useMemo(() => [...confirmed].sort(sortByExpiry), [confirmed]);
 
+  /**
+   * Pull-to-refresh hook to force retention checks and expire overdue items.
+   */
   const onRefresh = async () => {
     setRefreshing(true);
     await runRetentionCheck();
     setRefreshing(false);
   };
 
+  /**
+   * Restores selected photos and clears stale grid selection state.
+   */
   const onRestoreSelected = () => {
     bulkRestore(selectedIds);
     setResetSelectionKey((prev) => prev + 1);
   };
 
+  /**
+   * Permanently deletes selected photos immediately.
+   */
   const onDeleteSelectedNow = async () => {
     await DeletionService.executeDelete(selectedIds);
     setResetSelectionKey((prev) => prev + 1);
   };
 
+  /**
+   * Shows a destructive confirmation before emptying all trash.
+   */
   const onEmptyAllTrash = () => {
     Alert.alert(
       'Empty All Trash?',

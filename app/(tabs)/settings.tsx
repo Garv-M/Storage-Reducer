@@ -1,3 +1,6 @@
+// Settings tab for behavior preferences and recovery diagnostics.
+// Concentrates user-controlled review policy in one discoverable place.
+
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -13,6 +16,9 @@ import { colors } from '@/ui/theme/colors';
 // ── Animated pill for retention selection ─────────────────────────────────────
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * Radio-like chip for selecting trash retention days.
+ */
 function RetentionPill({
   days,
   selected,
@@ -28,6 +34,7 @@ function RetentionPill({
   return (
     <AnimatedPressable
       onPress={onPress}
+      // Subtle press feedback improves touch confidence for compact pills.
       onPressIn={() => { scale.value = withSpring(0.96, { damping: 15, stiffness: 400 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 400 }); }}
       accessibilityRole="radio"
@@ -51,6 +58,9 @@ function RetentionPill({
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Settings screen for retention and filtering preferences.
+ */
 export default function SettingsTabScreen() {
   const retentionDays = useSettingsStore((state) => state.retentionDays);
   const setRetentionDays = useSettingsStore((state) => state.setRetentionDays);

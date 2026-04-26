@@ -1,3 +1,6 @@
+// First-run welcome screen introducing core value props.
+// Uses staggered animation to make onboarding feel guided instead of abrupt.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
@@ -28,10 +31,13 @@ const FEATURES = [
 ] as const;
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Onboarding welcome screen with staged hero/card entrance animations.
+ */
 export default function WelcomeScreen() {
   const router = useRouter();
 
-  // Staggered entrance animations — one per card + hero section
+  // Separate animated values allow controlled stagger timing per section.
   const heroAnim = useRef(new Animated.Value(0)).current;
   const cardAnims = useRef(FEATURES.map(() => new Animated.Value(0))).current;
 
@@ -46,6 +52,7 @@ export default function WelcomeScreen() {
       Animated.timing(anim, {
         toValue: 1,
         duration: 300,
+        // Staggering supports progressive reading order and perceived smoothness.
         delay: 350 + i * 50,
         useNativeDriver: true,
       })

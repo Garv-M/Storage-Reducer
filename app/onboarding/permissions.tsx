@@ -1,3 +1,6 @@
+// Onboarding permissions screen for photo library access.
+// Explains scope before requesting OS permission to improve consent quality.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, SafeAreaView, StyleSheet, View } from 'react-native';
@@ -17,16 +20,23 @@ const BULLETS = [
 ] as const;
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Permission request screen shown during onboarding.
+ */
 export default function PermissionsScreen() {
   const router = useRouter();
   const setOnboarded = useSettingsStore((state) => state.setOnboarded);
   const { isRequesting, request } = useMediaPermissions();
 
+  /**
+   * Requests library access and advances onboarding only when granted.
+   */
   const onAllow = async () => {
     const result = await request();
 
     if (result.granted) {
       setOnboarded(true);
+      // Replace prevents returning to onboarding screens after successful completion.
       router.replace('/(tabs)/home');
       return;
     }
@@ -80,6 +90,7 @@ export default function PermissionsScreen() {
             size="md"
             fullWidth
             disabled
+            // Intentionally disabled until a limited-read mode exists.
             onPress={() => {}}
             accessibilityLabel="Skip permissions for now — limited functionality"
           />

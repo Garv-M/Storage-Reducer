@@ -1,3 +1,6 @@
+// Card-stack container that controls z-order, depth illusion, and completion flow.
+// Owns top-card interaction boundaries and loading/empty presentation states.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -20,12 +23,16 @@ import type { Asset } from '@/types/asset';
 import type { Decision } from '@/types/decision';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const CARD_SCALES  = [1,    0.95, 0.90] as const;
-const CARD_OFFSETS = [0,    10,   20]   as const;   // y-offset in dp
-const CARD_OPACITIES = [1,  0.70, 0.40] as const;
+const CARD_SCALES = [1, 0.95, 0.90] as const;
+const CARD_OFFSETS = [0, 10, 20] as const; // depth offsets that create the deck illusion
+const CARD_OPACITIES = [1, 0.70, 0.40] as const;
 const SPRING = { damping: 18, stiffness: 170 };
 
-// ── ShimmerCard ───────────────────────────────────────────────────────────────
+// ── Loading skeleton ──────────────────────────────────────────────────────────
+/**
+ * Placeholder card shown while initial media data is loading.
+ * Shimmer pulse loops 0.4 → 1.0 → 0.4 until real assets are ready.
+ */
 function ShimmerCard() {
   const shimmer = useSharedValue(0.4);
 
@@ -63,16 +70,20 @@ interface SwipeStackProps {
   onComplete?: () => void;
 }
 
-// ── AnimatedBackgroundCard ────────────────────────────────────────────────────
 interface BackgroundCardProps {
   asset: Asset;
   depth: 1 | 2;
   triggerScale: SharedValue<number>;
 }
 
+// ── Background layer ──────────────────────────────────────────────────────────
+/**
+ * Non-interactive card layer behind the top card.
+ * Animates forward when the top card is dismissed to reinforce stack continuity.
+ */
 function BackgroundCard({ asset: _asset, depth, triggerScale }: BackgroundCardProps) {
-  const targetScale  = CARD_SCALES[depth];
-  const yOffset      = CARD_OFFSETS[depth];
+  const targetScale = CARD_SCALES[depth];
+  const yOffset = CARD_OFFSETS[depth];
   const targetOpacity = CARD_OPACITIES[depth];
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -93,13 +104,16 @@ function BackgroundCard({ asset: _asset, depth, triggerScale }: BackgroundCardPr
   );
 }
 
-// ── SwipeStack ────────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Swipe stack rendering up to three cards with depth and transition motion.
+ */
 export function SwipeStack({ assets, onSwipeComplete, onIndexChange, isLoading = false, onComplete }: SwipeStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const transitionProgress = useSharedValue(0);
 
-  // When currentIndex changes, animate background cards springing forward
   useEffect(() => {
+    // Each advance triggers a spring-forward cue on background cards.
     transitionProgress.value = 1;
     transitionProgress.value = withSpring(0, SPRING);
   }, [currentIndex, transitionProgress]);
@@ -114,17 +128,18 @@ export function SwipeStack({ assets, onSwipeComplete, onIndexChange, isLoading =
 
   const visibleCards = useMemo(() => assets.slice(currentIndex, currentIndex + 3), [assets, currentIndex]);
 
+  /**
+   * Moves stack to the next item and emits index/completion signals.
+   */
   const advance = () => {
     const next = currentIndex + 1;
     setCurrentIndex(next);
     onIndexChange?.(next);
-    // Fire completion callback if no more cards remain
     if (next >= assets.length) {
       onComplete?.();
     }
   };
 
-  // ── Loading skeleton ────────────────────────────────────────────────────
   if (isLoading && assets.length === 0) {
     return (
       <View style={styles.container}>
@@ -133,7 +148,6 @@ export function SwipeStack({ assets, onSwipeComplete, onIndexChange, isLoading =
     );
   }
 
-  // ── Empty state ─────────────────────────────────────────────────────────
   if (!isLoading && assets.length === 0) {
     return (
       <View style={styles.empty}>
@@ -159,6 +173,7 @@ export function SwipeStack({ assets, onSwipeComplete, onIndexChange, isLoading =
     <View style={styles.container}>
       {visibleCards
         .map((asset, index) => ({ asset, index }))
+        // Reverse render order so logical index 0 (top card) is drawn last and sits above others.
         .reverse()
         .map(({ asset, index }) => {
           const isTopCard = index === 0;
@@ -168,6 +183,7 @@ export function SwipeStack({ assets, onSwipeComplete, onIndexChange, isLoading =
               <View
                 key={asset.id}
                 style={[styles.layer, { zIndex: 10 }]}
+                // Only top card should receive touch/gesture events.
                 pointerEvents="auto"
               >
                 <SwipeCard
@@ -194,6 +210,7 @@ export function SwipeStack({ assets, onSwipeComplete, onIndexChange, isLoading =
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -202,7 +219,6 @@ const styles = StyleSheet.create({
   layer: {
     ...StyleSheet.absoluteFillObject,
   },
-  // ── Empty state ──────────────────────────────────────────────────────────
   empty: {
     flex: 1,
     alignItems: 'center',
@@ -225,7 +241,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 280,
   },
-  // ── Background card placeholder ──────────────────────────────────────────
   bgCard: {
     flex: 1,
     borderRadius: 20,
@@ -233,7 +248,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray50,
   },
-  // ── Shimmer skeleton ─────────────────────────────────────────────────────
   shimmerCard: {
     flex: 1,
     borderRadius: 20,
