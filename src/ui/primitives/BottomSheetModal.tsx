@@ -1,5 +1,10 @@
+// UI Primitive: BottomSheetModal
+// Wrapper over @gorhom/bottom-sheet v5 for draggable, snap-point-based modals.
+// This primitive standardizes backdrop behavior, shape tokens, and accessibility
+// semantics so feature teams can focus on content.
+
 /**
- * BottomSheetModal — wraps @gorhom/bottom-sheet v5
+ * BottomSheetModal — wraps @gorhom/bottom-sheet v5.
  *
  * Usage: Mount <BottomSheetModalProvider> once in your root layout,
  * then use this component anywhere in the tree.
@@ -19,6 +24,9 @@ import { StyleSheet, View } from 'react-native';
 import { colors } from '@/ui/theme/colors';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * Props for the BottomSheetModal primitive.
+ */
 export interface BottomSheetModalProps {
   visible: boolean;
   onClose: () => void;
@@ -28,6 +36,9 @@ export interface BottomSheetModalProps {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Draggable bottom-sheet modal with configurable snap points.
+ */
 export function BottomSheetModal({
   visible,
   onClose,
@@ -36,7 +47,7 @@ export function BottomSheetModal({
 }: BottomSheetModalProps) {
   const ref = useRef<GorhomBottomSheetModal>(null);
 
-  // Drive present / dismiss from the visible prop
+  // Drive present/dismiss imperatively from declarative `visible` prop.
   useEffect(() => {
     if (visible) {
       ref.current?.present();
@@ -64,11 +75,13 @@ export function BottomSheetModal({
     <GorhomBottomSheetModal
       ref={ref}
       index={0}
+      // Percentage snap points scale naturally across devices/orientations.
       snapPoints={snapPoints}
       onDismiss={onClose}
       backdropComponent={renderBackdrop}
       handleIndicatorStyle={styles.handle}
       backgroundStyle={styles.background}
+      // Pan-down handle drag is the primary dismiss affordance.
       enablePanDownToClose
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
@@ -77,7 +90,7 @@ export function BottomSheetModal({
       accessibilityViewIsModal
     >
       <BottomSheetView style={styles.contentContainer}>
-        {/* Drag handle is rendered by the sheet itself */}
+        {/* Drag handle is rendered by the sheet itself. */}
         {children}
       </BottomSheetView>
     </GorhomBottomSheetModal>

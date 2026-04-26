@@ -1,3 +1,8 @@
+// UI Primitive: Toast
+// Transient status message that appears near the top safe area.
+// Top-entry motion avoids common keyboard and bottom inset conflicts seen in
+// mobile forms and modal-heavy flows.
+
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -15,8 +20,14 @@ import { colors } from '@/ui/theme/colors';
 import { fontFamilies, fontSizes } from '@/ui/theme/typography';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * Supported semantic tones for toast feedback.
+ */
 export type ToastType = 'success' | 'error' | 'info';
 
+/**
+ * Props for the Toast primitive.
+ */
 export interface ToastProps {
   message: string;
   type?: ToastType;
@@ -41,6 +52,9 @@ const toastIcons: Record<ToastType, keyof typeof Ionicons.glyphMap> = {
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Animated toast banner with auto-dismiss behavior.
+ */
 export function Toast({
   message,
   type = 'info',
@@ -59,11 +73,12 @@ export function Toast({
 
   useEffect(() => {
     if (visible) {
-      // Slide in from top
+      // Enter from above to avoid collision with bottom keyboards/sheets.
       translateY.value = withSpring(0, { damping: 18, stiffness: 280 });
       opacity.value = withTiming(1, { duration: 150 });
 
-      // Auto-dismiss after `duration`
+      // Auto-dismiss sequencing uses delay on the UI thread for reliable timing,
+      // then runOnJS to notify React state after animation completion.
       translateY.value = withDelay(
         duration,
         withSpring(-120, { damping: 18, stiffness: 280 }, (finished) => {
@@ -85,8 +100,10 @@ export function Toast({
         animatedStyle,
       ]}
       accessibilityRole="alert"
+      // "polite" announces updates without interrupting active screen-reader speech.
       accessibilityLiveRegion="polite"
       accessibilityLabel={`${type}: ${message}`}
+      // Toast is informational only; touches should pass through.
       pointerEvents="none"
     >
       <Ionicons name={toastIcons[type]} size={20} color={colors.white} />

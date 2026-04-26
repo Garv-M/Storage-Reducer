@@ -1,3 +1,7 @@
+// UI Primitive: Text
+// Semantic typography wrapper that maps design-system text variants to concrete
+// font family, size, and line-height tokens loaded from Plus Jakarta Sans.
+
 import type { ReactNode } from 'react';
 import { Text as RNText, StyleSheet } from 'react-native';
 import type { TextStyle } from 'react-native';
@@ -12,6 +16,9 @@ import {
 } from '@/ui/theme/typography';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * Props for the Text primitive.
+ */
 export interface TextProps {
   children: ReactNode;
   variant?: TextVariant;
@@ -25,7 +32,8 @@ export interface TextProps {
   selectable?: boolean;
 }
 
-// Weight → font family mapping
+// ── Token lookup maps ─────────────────────────────────────────────────────────
+// Weight keys resolve to actual loaded font-family names.
 const weightToFamily: Record<FontWeightKey, string> = {
   regular: fontFamilies.regular,
   medium: fontFamilies.medium,
@@ -33,7 +41,7 @@ const weightToFamily: Record<FontWeightKey, string> = {
   bold: fontFamilies.bold,
 };
 
-// Default color per variant
+// Defaults preserve hierarchy while keeping text on accessible gray ramps.
 const variantDefaultColor: Record<TextVariant, string> = {
   hero: colors.gray180,
   title: colors.gray180,
@@ -44,6 +52,9 @@ const variantDefaultColor: Record<TextVariant, string> = {
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Semantic text wrapper for consistent typography and optional overrides.
+ */
 export function Text({
   children,
   variant = 'body',
@@ -56,7 +67,8 @@ export function Text({
 }: TextProps) {
   const vStyle = textVariants[variant];
 
-  // Resolve font family — explicit weight prop wins, otherwise derive from variant weight
+  // Explicit `weight` wins; otherwise derive from variant metadata so callers
+  // can stay semantic by default and only override when truly necessary.
   const resolvedWeight = weight ?? getWeightKey(vStyle.weight);
   const fontFamily = weightToFamily[resolvedWeight] ?? fontFamilies.regular;
 
@@ -76,6 +88,8 @@ export function Text({
       numberOfLines={numberOfLines}
       accessibilityLabel={accessibilityLabel}
       selectable={selectable}
+      // We intentionally do not force accessibilityRole="text" here because
+      // native Text already exposes correct semantics in most contexts.
     >
       {children}
     </RNText>
@@ -83,6 +97,9 @@ export function Text({
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/**
+ * Converts numeric weight tokens to semantic keys used by `weightToFamily`.
+ */
 function getWeightKey(weight: string): FontWeightKey {
   const map: Record<string, FontWeightKey> = {
     [fontWeights.regular]: 'regular',

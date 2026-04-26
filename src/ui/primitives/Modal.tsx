@@ -1,3 +1,8 @@
+// UI Primitive: Modal
+// Centered dialog surface for focused decisions and form fragments.
+// Uses scale+fade entry to distinguish it from bottom-sheet interactions,
+// which rely on directional slide gestures.
+
 import { Ionicons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import {
@@ -19,6 +24,9 @@ import { colors } from '@/ui/theme/colors';
 import { fontFamilies, fontSizes } from '@/ui/theme/typography';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * Props for the Modal primitive.
+ */
 export interface ModalProps {
   visible: boolean;
   onClose: () => void;
@@ -29,6 +37,9 @@ export interface ModalProps {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Animated centered modal dialog.
+ */
 export function Modal({
   visible,
   onClose,
@@ -46,6 +57,7 @@ export function Modal({
   }));
 
   const handleShow = () => {
+    // Scale+fade reads as a dialog focus transition, distinct from sheets.
     scale.value = withSpring(1, { damping: 20, stiffness: 260 });
     opacity.value = withTiming(1, { duration: 180 });
   };
@@ -63,6 +75,7 @@ export function Modal({
       onShow={handleShow}
       onRequestClose={onClose}
       statusBarTranslucent
+      // Keeps screen-reader focus inside the modal while open.
       accessibilityViewIsModal
     >
       <Pressable
@@ -71,11 +84,12 @@ export function Modal({
         accessibilityLabel="Close modal"
         accessibilityRole="button"
       >
-        {/* Inner pressable stops propagation so tapping content doesn't close */}
+        {/* Inner pressable stops propagation so tapping content doesn't close. */}
         <Pressable onPress={() => {}} style={styles.pressableStop}>
           <Animated.View
             style={[
               styles.sheet,
+              // Respect device inset while preserving baseline breathing room.
               { paddingBottom: Math.max(insets.bottom, 16) },
               containerStyle,
             ]}
@@ -153,6 +167,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    // children control their own padding
+    // Children control their own inner padding by design.
   },
 });

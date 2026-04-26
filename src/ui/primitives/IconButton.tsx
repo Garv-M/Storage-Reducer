@@ -1,3 +1,8 @@
+// UI Primitive: IconButton
+// Compact circular action control for icon-only affordances (close, trash, etc.).
+// Encapsulates stronger press feedback than standard buttons to compensate for
+// smaller visual footprint while preserving minimum accessible hit area.
+
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet } from 'react-native';
@@ -10,8 +15,14 @@ import Animated, {
 import { colors } from '@/ui/theme/colors';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+/**
+ * Visual intent variants for icon-only actions.
+ */
 export type IconButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
+/**
+ * Props for the IconButton primitive.
+ */
 export interface IconButtonProps {
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
@@ -45,8 +56,12 @@ const borderColors: Record<IconButtonVariant, string | undefined> = {
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
+// Animated wrapper keeps press-scale interaction smooth on the UI thread.
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * Circular icon-only button with haptic and spring-press feedback.
+ */
 export function IconButton({
   icon,
   onPress,
@@ -57,7 +72,9 @@ export function IconButton({
   accessibilityHint,
   hapticStyle = 'light',
 }: IconButtonProps) {
+  // Clamp diameter to ensure at least 44pt target (WCAG 2.2 AA requirement).
   const clampedSize = Math.max(size, 44);
+  // Icon occupies ~46% of button diameter for legibility without crowding edges.
   const iconSize = Math.round(clampedSize * 0.46);
 
   const scale = useSharedValue(1);
@@ -68,6 +85,8 @@ export function IconButton({
   }));
 
   const handlePressIn = () => {
+    // Stronger compression than Button (0.90 vs 0.96) because smaller controls
+    // benefit from more pronounced tactile feedback.
     scale.value = withSpring(0.9, { damping: 14, stiffness: 420 });
   };
   const handlePressOut = () => {
@@ -80,6 +99,8 @@ export function IconButton({
       medium: Haptics.ImpactFeedbackStyle.Medium,
       heavy: Haptics.ImpactFeedbackStyle.Heavy,
     };
+    // Caller-controlled haptic weight supports context-sensitive emphasis
+    // (e.g., heavy for destructive, light for neutral utility actions).
     await Haptics.impactAsync(styleMap[hapticStyle]);
     onPress();
   };
@@ -104,6 +125,7 @@ export function IconButton({
         {
           width: clampedSize,
           height: clampedSize,
+          // Always circular regardless of size variant.
           borderRadius: clampedSize / 2,
           backgroundColor: bgColors[variant],
         },
