@@ -1,3 +1,7 @@
+// StatsDashboard summarizes progress signals from cleanup sessions.
+// It favors glanceable, card-based metrics so users can see momentum and
+// reclaimed storage without leaving the main workflow.
+
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
@@ -7,60 +11,43 @@ import { Text } from '@/ui/primitives/Text';
 import { colors } from '@/ui/theme/colors';
 import { bytesToHuman } from '@/utils/format';
 
-// ── Component ─────────────────────────────────────────────────────────────────
-export function StatsDashboard() {
-  const totalFreedBytes = useStatsStore((s) => s.totalFreedBytes);
-  const photosReviewed = useStatsStore((s) => s.photosReviewed);
-  const favoritesCount = useStatsStore((s) => s.favoritesCount);
-  const sessionsCompleted = useStatsStore((s) => s.sessionsCompleted);
+// ── Constants ─────────────────────────────────────────────────────────────────
+const STAT_CONFIGS = [
+  { key: 'freed', icon: 'cloud-download' as const, label: 'Storage freed' },
+  { key: 'reviewed', icon: 'images' as const, label: 'Photos reviewed' },
+  { key: 'favorites', icon: 'heart' as const, label: 'Favorites' },
+  { key: 'sessions', icon: 'layers' as const, label: 'Sessions done' },
+] as const;
 
-  const stats = [
-    {
-      icon: 'cloud-download' as const,
-      label: 'Storage freed',
-      value: bytesToHuman(totalFreedBytes),
-      valueColor: colors.blue100,
-    },
-    {
-      icon: 'images' as const,
-      label: 'Photos reviewed',
-      value: String(photosReviewed),
-      valueColor: colors.gray180,
-    },
-    {
-      icon: 'heart' as const,
-      label: 'Favorites',
-      value: String(favoritesCount),
-      valueColor: colors.gray180,
-    },
-    {
-      icon: 'layers' as const,
-      label: 'Sessions',
-      value: String(sessionsCompleted),
-      valueColor: colors.gray180,
-    },
-  ];
+// ── Component ─────────────────────────────────────────────────────────────────
+/**
+ * Renders user-facing cleanup KPIs in a responsive two-column card grid.
+ *
+ * Storage-freed metric is visually emphasized to reinforce tangible benefit.
+ */
+export function StatsDashboard() {
+  const totalFreedBytes = useStatsStore((state) => state.totalFreedBytes);
+  const photosReviewed = useStatsStore((state) => state.photosReviewed);
+  const favoritesCount = useStatsStore((state) => state.favoritesCount);
+  const sessionsCompleted = useStatsStore((state) => state.sessionsCompleted);
+
+  const values: Record<string, string> = {
+    freed: bytesToHuman(totalFreedBytes),
+    reviewed: String(photosReviewed),
+    favorites: String(favoritesCount),
+    sessions: String(sessionsCompleted),
+  };
 
   return (
     <View style={styles.grid}>
-      {stats.map((stat) => (
-        <View key={stat.label} style={styles.cell}>
-          <Card
-            variant="outlined"
-            padding={16}
-            accessibilityLabel={`${stat.label}: ${stat.value}`}
-          >
-            <View style={styles.cardContent}>
-              <Ionicons name={stat.icon} size={24} color={colors.gray100} />
-              <Text variant="caption" color={colors.light.textSecondary} style={styles.cardLabel}>
-                {stat.label}
-              </Text>
-              <Text variant="title" color={stat.valueColor}>
-                {stat.value}
-              </Text>
-            </View>
-          </Card>
-        </View>
+      {STAT_CONFIGS.map(({ key, icon, label }) => (
+        <Card key={key} variant="outlined" padding={12} style={styles.card} accessibilityLabel={`${label}: ${values[key]}`}>
+          <Ionicons name={icon} size={24} color={key === 'freed' ? colors.blue100 : colors.gray160} />
+          <Text variant="title" color={key === 'freed' ? colors.blue100 : colors.gray180} style={styles.value}>
+            {values[key]}
+          </Text>
+          <Text variant="caption" color={colors.light.textSecondary}>{label}</Text>
+        </Card>
       ))}
     </View>
   );
@@ -68,19 +55,8 @@ export function StatsDashboard() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  cell: {
-    minWidth: '48%',
-    flex: 1,
-  },
-  cardContent: {
-    gap: 6,
-  },
-  cardLabel: {
-    marginTop: 4,
-  },
+  // Wrap + minWidth yields stable 2-up cards across device sizes/orientation.
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  card: { flex: 1, minWidth: '48%', gap: 4 },
+  value: { marginTop: 4 },
 });

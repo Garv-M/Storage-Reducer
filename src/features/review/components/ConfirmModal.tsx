@@ -1,3 +1,7 @@
+// ConfirmModal is the final safety checkpoint before staged items move to trash.
+// It summarizes impact and highlights cloud-delete consequences to reduce
+// accidental cross-device data loss.
+
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 
@@ -19,29 +23,19 @@ interface ConfirmModalProps {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function ConfirmModal({
-  visible,
-  count,
-  totalBytes,
-  hasCloudOnlyItems,
-  onCancel,
-  onConfirm,
-}: ConfirmModalProps) {
+/**
+ * Confirmation dialog shown before staging transitions into confirmed trash.
+ *
+ * UX rule: backdrop dismissal is disabled so users must make an explicit choice
+ * for destructive intent (cancel vs confirm).
+ */
+export function ConfirmModal({ visible, count, totalBytes, hasCloudOnlyItems, onCancel, onConfirm }: ConfirmModalProps) {
   return (
-    <Modal
-      visible={visible}
-      onClose={onCancel}
-      dismissOnBackdrop={false}
-    >
-      {/* ── Warning icon ── */}
+    <Modal visible={visible} onClose={onCancel} dismissOnBackdrop={false}>
       <View style={styles.iconRow}>
         <Ionicons name="warning" size={56} color={colors.spark100} />
       </View>
-
-      {/* ── Title & summary ── */}
-      <Text variant="title" style={styles.heading}>
-        Confirm Cleanup
-      </Text>
+      <Text variant="title" style={styles.heading}>Confirm Cleanup</Text>
       <Text variant="body" color={colors.light.textSecondary} style={styles.summary}>
         {`${count} item${count !== 1 ? 's' : ''} staged for deletion`}
       </Text>
@@ -49,8 +43,9 @@ export function ConfirmModal({
         {`${bytesToHuman(totalBytes)} will be reclaimed (estimated)`}
       </Text>
 
-      {/* ── Cloud warning ── */}
       {hasCloudOnlyItems ? (
+        // Extra warning only when relevant to keep default path lightweight,
+        // but unmistakable when deletion propagates to iCloud.
         <Card variant="filled" padding={12} style={styles.cloudCard}>
           <View style={styles.cloudRow}>
             <Ionicons name="cloud-outline" size={18} color={colors.spark140} />
@@ -61,27 +56,12 @@ export function ConfirmModal({
         </Card>
       ) : null}
 
-      {/* ── Actions ── */}
       <View style={styles.actions}>
         <View style={styles.actionBtn}>
-          <Button
-            label="Cancel"
-            variant="secondary"
-            size="md"
-            fullWidth
-            onPress={onCancel}
-            accessibilityLabel="Cancel deletion"
-          />
+          <Button label="Cancel" variant="secondary" size="md" fullWidth onPress={onCancel} accessibilityLabel="Cancel deletion" />
         </View>
         <View style={styles.actionBtn}>
-          <Button
-            label="Confirm Delete"
-            variant="destructive"
-            size="md"
-            fullWidth
-            onPress={onConfirm}
-            accessibilityLabel="Confirm deletion of staged photos"
-          />
+          <Button label="Confirm Delete" variant="destructive" size="md" fullWidth onPress={onConfirm} accessibilityLabel="Confirm deletion of staged photos" />
         </View>
       </View>
     </Modal>
@@ -90,42 +70,13 @@ export function ConfirmModal({
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  iconRow: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  heading: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  summary: {
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  size: {
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  cloudCard: {
-    backgroundColor: colors.spark10,
-    borderWidth: 1,
-    borderColor: colors.spark140,
-    marginBottom: 20,
-  },
-  cloudRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  cloudText: {
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 8,
-  },
-  actionBtn: {
-    flex: 1,
-  },
+  iconRow: { alignItems: 'center', marginBottom: 16 },
+  heading: { textAlign: 'center', marginBottom: 8 },
+  summary: { textAlign: 'center', marginBottom: 4 },
+  size: { textAlign: 'center', marginBottom: 20 },
+  cloudCard: { backgroundColor: colors.spark10, borderWidth: 1, borderColor: colors.spark140, marginBottom: 20 },
+  cloudRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  cloudText: { flex: 1 },
+  actions: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  actionBtn: { flex: 1 },
 });
