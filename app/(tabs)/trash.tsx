@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BulkActionBar } from '@/features/trash/components/BulkActionBar';
 import { TrashGrid } from '@/features/trash/components/TrashGrid';
@@ -8,10 +9,19 @@ import { DeletionService } from '@/services/deletion/DeletionService';
 import { runRetentionCheck } from '@/services/deletion/retentionScheduler';
 import { bulkRestore } from '@/services/deletion/restore';
 import { useTrashStore } from '@/stores/trashStore';
+import { Button } from '@/ui/primitives/Button';
+import { Card } from '@/ui/primitives/Card';
+import { Text } from '@/ui/primitives/Text';
+import { colors } from '@/ui/theme/colors';
 
-const sortByExpiry = (a: { expiresAt: number }, b: { expiresAt: number }) => a.expiresAt - b.expiresAt;
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const sortByExpiry = (a: { expiresAt: number }, b: { expiresAt: number }) =>
+  a.expiresAt - b.expiresAt;
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function TrashTabScreen() {
+  const insets = useSafeAreaInsets();
+
   const confirmed = useTrashStore((state) => state.confirmed);
   const [activeSegment, setActiveSegment] = useState<'trash' | 'info'>('trash');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -36,36 +46,82 @@ export default function TrashTabScreen() {
     setResetSelectionKey((prev) => prev + 1);
   };
 
-  const onEmptyAllTrash = async () => {
-    await DeletionService.emptyTrash();
-    setResetSelectionKey((prev) => prev + 1);
+  const onEmptyAllTrash = () => {
+    Alert.alert(
+      'Empty All Trash?',
+      'This will permanently delete all photos in your trash. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Empty Trash',
+          style: 'destructive',
+          onPress: async () => {
+            await DeletionService.emptyTrash();
+            setResetSelectionKey((prev) => prev + 1);
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#ffffff', paddingTop: 56 }}>
-      <View style={{ paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={{ flex: 1, fontWeight: '700', fontSize: 22, color: '#2e3a46' }}>Trash</Text>
-        <Pressable onPress={onEmptyAllTrash} style={{ borderWidth: 1, borderColor: '#ea1100', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 }}>
-          <Text style={{ color: '#ea1100', fontWeight: '700' }}>Empty All Trash</Text>
-        </Pressable>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      {/* ── Header ── */}
+      <View style={styles.header}>
+        <Text variant="title" color={colors.gray180}>
+          Trash
+        </Text>
+        <Button
+          label="Empty All"
+          variant="destructive"
+          size="sm"
+          onPress={onEmptyAllTrash}
+          accessibilityLabel="Empty all trash — permanently delete all staged photos"
+        />
       </View>
 
-      <View style={{ marginTop: 14, marginHorizontal: 16, backgroundColor: '#f1f3f5', borderRadius: 12, padding: 4, flexDirection: 'row' }}>
+      {/* ── Segmented control ── */}
+      <View style={styles.segmentWrap}>
         <Pressable
           onPress={() => setActiveSegment('trash')}
-          style={{ flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: activeSegment === 'trash' ? '#ffffff' : 'transparent' }}
+          accessibilityRole="tab"
+          accessibilityLabel="In-App Trash tab"
+          accessibilityState={{ selected: activeSegment === 'trash' }}
+          style={[
+            styles.segment,
+            activeSegment === 'trash' ? styles.segmentActive : styles.segmentInactive,
+          ]}
         >
-          <Text style={{ textAlign: 'center', color: '#2e3a46', fontWeight: '600' }}>In-App Trash</Text>
+          <Text
+            variant="label"
+            weight="semibold"
+            color={activeSegment === 'trash' ? colors.white : colors.light.textSecondary}
+          >
+            In-App Trash
+          </Text>
         </Pressable>
         <Pressable
           onPress={() => setActiveSegment('info')}
-          style={{ flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: activeSegment === 'info' ? '#ffffff' : 'transparent' }}
+          accessibilityRole="tab"
+          accessibilityLabel="Info tab"
+          accessibilityState={{ selected: activeSegment === 'info' }}
+          style={[
+            styles.segment,
+            activeSegment === 'info' ? styles.segmentActive : styles.segmentInactive,
+          ]}
         >
-          <Text style={{ textAlign: 'center', color: '#2e3a46', fontWeight: '600' }}>Info</Text>
+          <Text
+            variant="label"
+            weight="semibold"
+            color={activeSegment === 'info' ? colors.white : colors.light.textSecondary}
+          >
+            Info
+          </Text>
         </Pressable>
       </View>
 
-      <View style={{ flex: 1, marginTop: 10 }}>
+      {/* ── Content ── */}
+      <View style={styles.content}>
         {activeSegment === 'trash' ? (
           <TrashGrid
             items={sortedItems}
@@ -75,24 +131,93 @@ export default function TrashTabScreen() {
             onSelectionChange={setSelectedIds}
           />
         ) : (
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
-            <Text style={{ color: '#2e3a46', fontWeight: '700', fontSize: 16 }}>How Trash Works</Text>
-            <Text style={{ color: '#2e3a46' }}>
-              In-App Trash is a safety hold before deleting photos from your device library.
-            </Text>
-            <Text style={{ color: '#2e3a46' }}>
-              After deletion from this app, photos may still appear in your OS "Recently Deleted" album until your device permanently clears them.
-            </Text>
-            <Text style={{ color: '#2e3a46' }}>
-              Items are auto-deleted when their retention window expires.
-            </Text>
+          <ScrollView contentContainerStyle={styles.infoPad}>
+            <Card variant="filled" padding={16}>
+              <View style={styles.infoHeader}>
+                <Ionicons name="information-circle" size={22} color={colors.blue100} />
+                <Text variant="heading" color={colors.gray180}>
+                  How Trash Works
+                </Text>
+              </View>
+              <View style={styles.infoBullets}>
+                <Text variant="body" color={colors.light.textSecondary}>
+                  In-App Trash is a safety hold before deleting photos from your device library.
+                </Text>
+                <Text variant="body" color={colors.light.textSecondary}>
+                  After deletion from this app, photos may still appear in your OS "Recently
+                  Deleted" album until your device permanently clears them.
+                </Text>
+                <Text variant="body" color={colors.light.textSecondary}>
+                  Items are auto-deleted when their retention window expires.
+                </Text>
+              </View>
+            </Card>
           </ScrollView>
         )}
       </View>
 
+      {/* ── Bulk action bar ── */}
       {activeSegment === 'trash' ? (
-        <BulkActionBar selectedCount={selectedIds.length} onRestore={onRestoreSelected} onDeleteNow={onDeleteSelectedNow} />
+        <BulkActionBar
+          selectedCount={selectedIds.length}
+          onRestore={onRestoreSelected}
+          onDeleteNow={onDeleteSelectedNow}
+        />
       ) : null}
     </View>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.light.background,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  segmentWrap: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    backgroundColor: colors.gray10,
+    borderRadius: 12,
+    padding: 4,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  segmentActive: {
+    backgroundColor: colors.blue100,
+  },
+  segmentInactive: {
+    backgroundColor: 'transparent',
+  },
+  content: {
+    flex: 1,
+  },
+  infoPad: {
+    padding: 16,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  infoBullets: {
+    gap: 12,
+  },
+});

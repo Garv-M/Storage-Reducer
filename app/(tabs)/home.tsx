@@ -1,14 +1,19 @@
-import { useMemo } from 'react';
-
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
+import { StatsDashboard } from '@/features/stats/components/StatsDashboard';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { StatsDashboard } from '@/features/stats/components/StatsDashboard';
 import { useStatsStore } from '@/stores/statsStore';
 import { useTrashStore } from '@/stores/trashStore';
+import { Button } from '@/ui/primitives/Button';
+import { Card } from '@/ui/primitives/Card';
+import { Text } from '@/ui/primitives/Text';
+import { colors } from '@/ui/theme/colors';
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function HomeTabScreen() {
   const router = useRouter();
 
@@ -34,31 +39,140 @@ export default function HomeTabScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white px-6 pt-12">
-      <Text style={{ fontSize: 26, fontWeight: '700', color: '#2e3a46' }}>Storage Reducer</Text>
-      <Text style={{ marginTop: 6, color: '#2e3a46' }}>Swipe photos and stage cleanup safely.</Text>
-
-      {resumable ? (
-        <Pressable onPress={resume} style={{ marginTop: 20, borderWidth: 1, borderColor: '#d7dde4', borderRadius: 12, padding: 12 }}>
-          <Text style={{ fontWeight: '700', color: '#2e3a46' }}>Resume previous session</Text>
-          <Text style={{ marginTop: 4, color: '#2e3a46' }}>{`Started ${new Date(resumable.createdAt).toLocaleString()}`}</Text>
-        </Pressable>
-      ) : null}
-
-      <View style={{ marginTop: 20 }}>
-        <StatsDashboard />
-      </View>
-
-      {confirmedTrash.length > 0 ? (
-        <View style={{ marginTop: 16, borderWidth: 1, borderColor: '#ffc220', backgroundColor: '#fff8e1', borderRadius: 12, padding: 12 }}>
-          <Text style={{ color: '#995213', fontWeight: '700' }}>{`${confirmedTrash.length} photos in trash`}</Text>
-          <Text style={{ color: '#995213', marginTop: 4 }}>Some items are expiring soon. Open Trash to restore or delete now.</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <Text variant="hero" color={colors.blue100}>
+            SwipeClean
+          </Text>
+          <Ionicons name="sparkles" size={24} color={colors.spark100} />
         </View>
-      ) : null}
 
-      <Pressable onPress={startReview} style={{ marginTop: 20, backgroundColor: '#0053e2', borderRadius: 12, padding: 14, alignItems: 'center' }}>
-        <Text style={{ color: '#fff', fontWeight: '700' }}>Start Review</Text>
-      </Pressable>
-    </View>
+        {/* ── Resume session card ── */}
+        {resumable ? (
+          <View style={styles.section}>
+            <Pressable
+              onPress={resume}
+              accessibilityRole="button"
+              accessibilityLabel="Resume previous session"
+            >
+              <Card variant="elevated" padding={16} style={styles.resumeCard}>
+                <View style={styles.resumeInner}>
+                  <Ionicons name="play-circle" size={48} color={colors.blue100} />
+                  <View style={styles.resumeText}>
+                    <Text variant="heading" color={colors.gray180}>
+                      Resume Session
+                    </Text>
+                    <Text variant="caption" color={colors.light.textSecondary}>
+                      {`Started ${new Date(resumable.createdAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}`}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.gray100} />
+                </View>
+              </Card>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* ── Stats ── */}
+        <View style={styles.section}>
+          <StatsDashboard />
+        </View>
+
+        {/* ── Trash warning ── */}
+        {confirmedTrash.length > 0 ? (
+          <View style={styles.section}>
+            <Card
+              variant="outlined"
+              padding={16}
+              style={styles.trashCard}
+              accessibilityLabel={`${confirmedTrash.length} photos in trash`}
+            >
+              <View style={styles.trashRow}>
+                <Ionicons name="warning" size={24} color={colors.spark100} />
+                <View style={styles.trashText}>
+                  <Text variant="heading" color={colors.spark140}>
+                    {`${confirmedTrash.length} photos in trash`}
+                  </Text>
+                  <Text variant="caption" color={colors.spark140}>
+                    Some items expiring soon — open Trash to manage.
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </View>
+        ) : null}
+
+        {/* ── CTA ── */}
+        <View style={styles.section}>
+          <Button
+            label="Start New Review"
+            variant="primary"
+            size="lg"
+            fullWidth
+            onPress={startReview}
+            icon={<Ionicons name="camera" size={20} color={colors.white} />}
+            accessibilityLabel="Start a new photo review session"
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.light.background,
+  },
+  scroll: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 32,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 48,
+  },
+  section: {
+    marginBottom: 48,
+  },
+  resumeCard: {
+    width: '100%',
+  },
+  resumeInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  resumeText: {
+    flex: 1,
+    gap: 4,
+  },
+  trashCard: {
+    backgroundColor: colors.spark10,
+    borderColor: colors.spark140,
+    borderWidth: 1,
+  },
+  trashRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  trashText: {
+    flex: 1,
+    gap: 4,
+  },
+});

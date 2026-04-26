@@ -1,40 +1,141 @@
-import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { StagedTrashItem } from '@/stores/trashStore';
+import { Text } from '@/ui/primitives/Text';
+import { colors } from '@/ui/theme/colors';
 import { bytesToHuman } from '@/utils/format';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface SelectableThumbProps {
   item: StagedTrashItem;
   selected: boolean;
   onToggle: (assetId: string) => void;
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export function SelectableThumb({ item, selected, onToggle }: SelectableThumbProps) {
   const relatedAlbums = item.albumIds.slice(1);
 
   return (
-    <Pressable disabled={item.isShared} onPress={() => onToggle(item.assetId)} style={{ flex: 1 / 3, padding: 4, opacity: item.isShared ? 0.85 : 1 }}>
-      <View style={{ borderRadius: 8, overflow: 'hidden', borderWidth: selected ? 2 : 0, borderColor: '#0053e2' }}>
-        <Image source={{ uri: item.uri }} style={{ width: '100%', aspectRatio: 1 }} contentFit="cover" />
-        <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: '#fff', borderRadius: 999, width: 18, height: 18, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: '#0053e2', fontSize: 11 }}>{selected ? '✓' : ''}</Text>
+    <Pressable
+      disabled={item.isShared}
+      onPress={() => onToggle(item.assetId)}
+      accessibilityRole="checkbox"
+      accessibilityLabel={`Photo, ${bytesToHuman(item.bytes)}${item.isCloudOnly ? ', iCloud' : ''}${item.isShared ? ', shared — cannot delete' : ''}`}
+      accessibilityState={{ checked: selected, disabled: item.isShared }}
+      style={[styles.cell, { opacity: item.isShared ? 0.75 : 1 }]}
+    >
+      <View style={[styles.thumb, selected && styles.thumbSelected]}>
+        <Image
+          source={{ uri: item.uri }}
+          style={styles.image}
+          contentFit="cover"
+          recyclingKey={item.assetId}
+        />
+
+        {/* ── Selection checkbox ── */}
+        <View style={styles.checkWrap}>
+          <Ionicons
+            name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+            size={20}
+            color={selected ? colors.blue100 : colors.gray100}
+          />
         </View>
+
+        {/* ── iCloud badge ── */}
         {item.isCloudOnly ? (
-          <View style={{ position: 'absolute', top: 6, left: 6, backgroundColor: '#fff8e1', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 }}>
-            <Text style={{ color: '#995213', fontSize: 10, fontWeight: '700' }}>iCloud</Text>
+          <View style={styles.icloudBadge}>
+            <Text variant="label" color={colors.blue100}>
+              iCloud
+            </Text>
           </View>
         ) : null}
+
+        {/* ── Shared badge ── */}
         {item.isShared ? (
-          <View style={{ position: 'absolute', left: 6, right: 6, bottom: 24, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 }}>
-            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>Shared - can't delete</Text>
+          <View style={styles.sharedBadge}>
+            <Text variant="label" color={colors.white}>
+              Shared
+            </Text>
           </View>
         ) : null}
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 6, paddingVertical: 3 }}>
-          <Text style={{ color: '#fff', fontSize: 10 }}>{bytesToHuman(item.bytes)}</Text>
-          {relatedAlbums.length > 0 ? <Text style={{ color: '#fff', fontSize: 9 }}>{`Also in: ${relatedAlbums.join(', ')}`}</Text> : null}
+
+        {/* ── Size bar ── */}
+        <View style={styles.sizeBar}>
+          <Text variant="label" color={colors.white}>
+            {bytesToHuman(item.bytes)}
+          </Text>
+          {relatedAlbums.length > 0 ? (
+            <Text variant="label" color={colors.white} numberOfLines={1}>
+              {`+${relatedAlbums.length} album${relatedAlbums.length > 1 ? 's' : ''}`}
+            </Text>
+          ) : null}
         </View>
       </View>
     </Pressable>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  cell: {
+    flex: 1 / 3,
+    padding: 2,
+  },
+  thumb: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  thumbSelected: {
+    borderColor: colors.blue100,
+  },
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  checkWrap: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icloudBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: colors.white,
+    borderRadius: 100,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: colors.blue100,
+  },
+  sharedBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: colors.spark100,
+    borderRadius: 100,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sizeBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(27,36,45,0.55)',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    gap: 1,
+  },
+});

@@ -1,8 +1,23 @@
-import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { ConfirmedTrashItem } from '@/stores/trashStore';
+import { Text } from '@/ui/primitives/Text';
+import { colors } from '@/ui/theme/colors';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const daysLeft = (expiresAt: number) =>
+  Math.max(0, Math.ceil((expiresAt - Date.now()) / 86_400_000));
+
+/** Returns bg + text color for the expiry badge based on urgency. */
+function expiryColors(days: number): { bg: string; text: string } {
+  if (days <= 3) return { bg: colors.red100, text: colors.white };
+  if (days <= 7) return { bg: colors.spark100, text: colors.gray180 };
+  return { bg: colors.green100, text: colors.white };
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface TrashItemProps {
   item: ConfirmedTrashItem;
   selected: boolean;
@@ -11,22 +26,88 @@ interface TrashItemProps {
   onLongPress: (assetId: string) => void;
 }
 
-const daysLeft = (expiresAt: number) => Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000));
-
+// ── Component ─────────────────────────────────────────────────────────────────
 export function TrashItem({ item, selected, selectionMode, onPress, onLongPress }: TrashItemProps) {
+  const days = daysLeft(item.expiresAt);
+  const { bg: badgeBg, text: badgeText } = expiryColors(days);
+
   return (
-    <Pressable onPress={() => onPress(item.assetId)} onLongPress={() => onLongPress(item.assetId)} style={{ flex: 1 / 3, padding: 4 }}>
-      <View style={{ borderRadius: 8, overflow: 'hidden', borderColor: selected ? '#0053e2' : '#d7dde4', borderWidth: selectionMode ? 2 : 1 }}>
-        <Image source={{ uri: item.uri }} style={{ width: '100%', aspectRatio: 1 }} contentFit="cover" />
-        <View style={{ position: 'absolute', top: 6, left: 6, backgroundColor: '#fff8e1', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}>
-          <Text style={{ color: '#995213', fontSize: 10, fontWeight: '700' }}>{`${daysLeft(item.expiresAt)}d left`}</Text>
+    <Pressable
+      onPress={() => onPress(item.assetId)}
+      onLongPress={() => onLongPress(item.assetId)}
+      accessibilityRole="checkbox"
+      accessibilityLabel={`Trash item, expires in ${days} day${days !== 1 ? 's' : ''}${selected ? ', selected' : ''}`}
+      accessibilityState={{ checked: selected }}
+      style={styles.cell}
+    >
+      <View
+        style={[
+          styles.thumb,
+          selectionMode
+            ? { borderColor: selected ? colors.blue100 : colors.gray50, borderWidth: 2 }
+            : { borderWidth: 1, borderColor: colors.gray50 },
+        ]}
+      >
+        <Image
+          source={{ uri: item.uri }}
+          style={styles.image}
+          contentFit="cover"
+          recyclingKey={item.assetId}
+        />
+
+        {/* ── Expiry countdown badge ── */}
+        <View style={[styles.expiryBadge, { backgroundColor: badgeBg }]}>
+          <Text variant="label" color={badgeText}>
+            {`${days}d`}
+          </Text>
         </View>
+
+        {/* ── Selection indicator ── */}
         {selectionMode ? (
-          <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: '#ffffff', borderRadius: 999, width: 18, height: 18, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#0053e2', fontSize: 11 }}>{selected ? '✓' : ''}</Text>
+          <View style={styles.checkWrap}>
+            <Ionicons
+              name={selected ? 'checkmark-circle' : 'ellipse-outline'}
+              size={20}
+              color={selected ? colors.blue100 : colors.gray100}
+            />
           </View>
         ) : null}
       </View>
     </Pressable>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  cell: {
+    flex: 1 / 3,
+    padding: 2,
+  },
+  thumb: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  expiryBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    borderRadius: 100,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  checkWrap: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
