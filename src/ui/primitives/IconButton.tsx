@@ -20,6 +20,8 @@ export interface IconButtonProps {
   variant?: IconButtonVariant;
   disabled?: boolean;
   accessibilityLabel: string; // required for icon-only controls
+  accessibilityHint?: string;
+  hapticStyle?: 'light' | 'medium' | 'heavy';
 }
 
 // ── Variant lookups ───────────────────────────────────────────────────────────
@@ -52,6 +54,8 @@ export function IconButton({
   variant = 'secondary',
   disabled = false,
   accessibilityLabel,
+  accessibilityHint,
+  hapticStyle = 'light',
 }: IconButtonProps) {
   const clampedSize = Math.max(size, 44);
   const iconSize = Math.round(clampedSize * 0.46);
@@ -71,7 +75,12 @@ export function IconButton({
   };
   const handlePress = async () => {
     if (disabled) return;
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const styleMap = {
+      light: Haptics.ImpactFeedbackStyle.Light,
+      medium: Haptics.ImpactFeedbackStyle.Medium,
+      heavy: Haptics.ImpactFeedbackStyle.Heavy,
+    };
+    await Haptics.impactAsync(styleMap[hapticStyle]);
     onPress();
   };
 
@@ -88,6 +97,7 @@ export function IconButton({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
       style={[
         styles.base,

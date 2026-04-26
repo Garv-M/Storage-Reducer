@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
   SharedValue,
@@ -7,6 +8,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { DECISION_COLORS } from '@/features/swipe/logic/decisions';
+import { Text } from '@/ui/primitives/Text';
+import { colors } from '@/ui/theme/colors';
 
 interface SwipeActionOverlayProps {
   tx: SharedValue<number>;
@@ -15,33 +18,113 @@ interface SwipeActionOverlayProps {
   height: number;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+/** Hex → rgba with given alpha (0–1). */
+function hexAlpha(hex: string, alpha: number) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+const DELETE_BG   = hexAlpha(DECISION_COLORS.DELETE_STAGED, 0.88);
+const KEEP_BG     = hexAlpha(DECISION_COLORS.KEEP, 0.88);
+const FAVORITE_BG = hexAlpha(DECISION_COLORS.FAVORITE, 0.88);
+const SKIP_BG     = hexAlpha(DECISION_COLORS.SKIP_LATER, 0.88);
+
 export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlayProps) {
-  const leftStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(tx.value, [-width * 0.3, 0], [1, 0], Extrapolation.CLAMP),
-  }));
-  const rightStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(tx.value, [0, width * 0.3], [0, 1], Extrapolation.CLAMP),
-  }));
-  const topStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(ty.value, [-height * 0.3, 0], [1, 0], Extrapolation.CLAMP),
-  }));
-  const bottomStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(ty.value, [0, height * 0.3], [0, 1], Extrapolation.CLAMP),
-  }));
+  // ── Swipe-left → DELETE ──────────────────────────────────────────────────
+  const leftStyle = useAnimatedStyle(() => {
+    const drag = -tx.value; // positive when dragging left
+    return {
+      opacity: interpolate(drag, [0, width * 0.15], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        {
+          scale: interpolate(drag, [0, width * 0.3], [0.6, 1.12], Extrapolation.CLAMP),
+        },
+      ],
+    };
+  });
+
+  // ── Swipe-right → KEEP ──────────────────────────────────────────────────
+  const rightStyle = useAnimatedStyle(() => {
+    const drag = tx.value; // positive when dragging right
+    return {
+      opacity: interpolate(drag, [0, width * 0.15], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        {
+          scale: interpolate(drag, [0, width * 0.3], [0.6, 1.12], Extrapolation.CLAMP),
+        },
+      ],
+    };
+  });
+
+  // ── Swipe-up → FAVORITE ─────────────────────────────────────────────────
+  const topStyle = useAnimatedStyle(() => {
+    const drag = -ty.value; // positive when dragging up
+    return {
+      opacity: interpolate(drag, [0, height * 0.15], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        {
+          scale: interpolate(drag, [0, height * 0.3], [0.6, 1.12], Extrapolation.CLAMP),
+        },
+      ],
+    };
+  });
+
+  // ── Swipe-down → SKIP ───────────────────────────────────────────────────
+  const bottomStyle = useAnimatedStyle(() => {
+    const drag = ty.value; // positive when dragging down
+    return {
+      opacity: interpolate(drag, [0, height * 0.15], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        {
+          scale: interpolate(drag, [0, height * 0.3], [0.6, 1.12], Extrapolation.CLAMP),
+        },
+      ],
+    };
+  });
 
   return (
     <>
-      <Animated.View style={[styles.badge, styles.left, { backgroundColor: DECISION_COLORS.DELETE_STAGED }, leftStyle]}>
-        <Text style={styles.label}>DELETE</Text>
+      {/* DELETE — swipe left */}
+      <Animated.View
+        style={[styles.badge, styles.left, { backgroundColor: DELETE_BG, shadowColor: DECISION_COLORS.DELETE_STAGED }, leftStyle]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Ionicons name="trash-outline" size={20} color={colors.white} style={styles.icon} />
+        <Text variant="label" weight="bold" color={colors.white} style={styles.label}>DELETE</Text>
       </Animated.View>
-      <Animated.View style={[styles.badge, styles.right, { backgroundColor: DECISION_COLORS.KEEP }, rightStyle]}>
-        <Text style={styles.label}>KEEP</Text>
+
+      {/* KEEP — swipe right */}
+      <Animated.View
+        style={[styles.badge, styles.right, { backgroundColor: KEEP_BG, shadowColor: DECISION_COLORS.KEEP }, rightStyle]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Ionicons name="checkmark-circle" size={20} color={colors.white} style={styles.icon} />
+        <Text variant="label" weight="bold" color={colors.white} style={styles.label}>KEEP</Text>
       </Animated.View>
-      <Animated.View style={[styles.badge, styles.top, { backgroundColor: DECISION_COLORS.FAVORITE }, topStyle]}>
-        <Text style={styles.label}>FAVORITE</Text>
+
+      {/* FAVORITE — swipe up */}
+      <Animated.View
+        style={[styles.badge, styles.top, { backgroundColor: FAVORITE_BG, shadowColor: DECISION_COLORS.FAVORITE }, topStyle]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Ionicons name="heart" size={20} color={colors.white} style={styles.icon} />
+        <Text variant="label" weight="bold" color={colors.white} style={styles.label}>FAVORITE</Text>
       </Animated.View>
-      <Animated.View style={[styles.badge, styles.bottom, { backgroundColor: DECISION_COLORS.SKIP_LATER }, bottomStyle]}>
-        <Text style={styles.label}>SKIP</Text>
+
+      {/* SKIP — swipe down */}
+      <Animated.View
+        style={[styles.badge, styles.bottom, { backgroundColor: SKIP_BG, shadowColor: DECISION_COLORS.SKIP_LATER }, bottomStyle]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Ionicons name="time-outline" size={20} color={colors.white} style={styles.icon} />
+        <Text variant="label" weight="bold" color={colors.white} style={styles.label}>SKIP</Text>
       </Animated.View>
     </>
   );
@@ -50,18 +133,42 @@ export function SwipeActionOverlay({ tx, ty, width, height }: SwipeActionOverlay
 const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 999,
     zIndex: 40,
+    // Glow shadow
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  left: { left: 12, top: '45%' },
-  right: { right: 12, top: '45%' },
-  top: { top: 16, alignSelf: 'center' },
-  bottom: { bottom: 16, alignSelf: 'center' },
+  // Centered vertically on each side
+  left: {
+    left: 16,
+    top: '50%',
+    transform: [{ translateY: -22 }],
+  },
+  right: {
+    right: 16,
+    top: '50%',
+    transform: [{ translateY: -22 }],
+  },
+  // Centered horizontally top/bottom
+  top: {
+    top: 24,
+    alignSelf: 'center',
+  },
+  bottom: {
+    bottom: 24,
+    alignSelf: 'center',
+  },
+  icon: {
+    marginRight: 6,
+  },
   label: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 12,
+    letterSpacing: 0.5,
   },
 });
